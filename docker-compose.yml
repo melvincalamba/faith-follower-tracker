@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+
+  # ─── PostgreSQL Database ───────────────────────────────
+  db:
+    image: postgres:15
+    container_name: fft_db
+    restart: always
+    environment:
+      POSTGRES_USER: localhost
+      POSTGRES_PASSWORD: 1120melvin
+      POSTGRES_DB: faith_follower_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+    networks:
+      - fft_network
+
+  # ─── Backend (Node + Express) ──────────────────────────
+  backend:
+    build: ./backend
+    container_name: fft_backend
+    restart: always
+    environment:
+      DATABASE_URL: postgres://localhost:1120melvin@db:5432/faith_follower_db
+      NODE_ENV: development
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+    networks:
+      - fft_network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  # ─── Frontend (React) ──────────────────────────────────
+  frontend:
+    build: ./frontend
+    container_name: fft_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - fft_network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+# ─── Volumes & Networks ──────────────────────────────────
+volumes:
+  postgres_data:
+
+networks:
+  fft_network:
+    driver: bridge
