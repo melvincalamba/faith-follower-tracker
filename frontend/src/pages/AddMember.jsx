@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { progressStages, classifications, mentors } from '../data/mockData'
 import toast from 'react-hot-toast'
@@ -9,7 +8,7 @@ const emptyForm = {
   name:           '',
   progress:       'Pre-FIC',
   classification: 'TBA',
-  mentor:         '',
+  mentor_id:         '',
   details:        '',
 }
 
