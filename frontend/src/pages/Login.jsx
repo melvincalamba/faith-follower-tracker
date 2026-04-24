@@ -1,60 +1,106 @@
-function Login() {
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
-  const navigate = useNavigate()
+import { useState }    from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth }     from '../context/AuthContext'
+import { loginUser }   from '../services/api'
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+function Login() {
+  const [form, setForm]       = useState({ email: '', password: '' })
+  const [error, setError]     = useState('')
+  const [loading, setLoading] = useState(false)
+  const { login }             = useAuth()
+  const navigate              = useNavigate()
+
+  function handleChange(e) {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  async function handleLogin() {
+    setError('')
+    setLoading(true)
+    try {
+      const res = await loginUser(form)
+      login(res.data.token, res.data.user)
+      setTimeout(() => navigate('/'), 100)
+    } catch (err) {
+      setError(err.response?.data?.error || 'May error sa login.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div style={{ padding: '60px 24px', maxWidth: '360px', margin: '0 auto' }}>
-      <h2 style={{ textAlign: 'center' }}>🙏 Faith Follower Tracker</h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <label>Email
-          <input type="email" name="email" placeholder="you@email.com" style={input} onChange={handleChange} />
-        </label>
-        <label>Password
-          <input type="password" name="password" placeholder="••••••••" style={input} onChange={handleChange} />
-        </label>
-        <button style={btn} onClick={handleLogin} disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#f0f4ff',
+    }}>
+      <div style={{
+        backgroundColor: 'white',
+        padding: '40px',
+        borderRadius: '12px',
+        boxShadow: '0 2px 16px rgba(0,0,0,0.1)',
+        width: '100%',
+        maxWidth: '360px',
+      }}>
+        <h2 style={{ textAlign: 'center', color: '#1e3a5f', marginBottom: '8px' }}>
+          🙏 Faith Follower Tracker
+        </h2>
+        <p style={{ textAlign: 'center', color: '#888', marginBottom: '24px', fontSize: '14px' }}>
+          Sign in to continue
+        </p>
+
+        {error && (
+          <p style={{ color: 'red', fontSize: '13px', marginBottom: '12px' }}>{error}</p>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <label style={labelStyle}>Email
+            <input
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="you@email.com"
+              style={input}
+            />
+          </label>
+          <label style={labelStyle}>Password
+            <input
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              style={input}
+            />
+          </label>
+          <button
+            onClick={handleLogin}
+            disabled={loading}
+            style={{ ...btnPrimary, opacity: loading ? 0.7 : 1 }}
+          >
+            {loading ? 'Signing in...' : 'Login'}
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
-async function handleLogin() {
-  setError('')
-  setLoading(true)
-  try {
-    const res = await loginUser(form)
-    login(res.data.token, res.data.user)
-
-    // Slight delay para ma-update muna ang AuthContext
-    // bago mag-navigate
-    setTimeout(() => navigate('/'), 100)
-  } catch (err) {
-    setError(err.response?.data?.error || 'May error sa login.')
-  } finally {
-    setLoading(false)
-  }
+const labelStyle = {
+  display: 'flex', flexDirection: 'column',
+  gap: '4px', fontSize: '14px', fontWeight: '600'
 }
-
 const input = {
-  display: 'block', width: '100%', padding: '8px',
-  marginTop: '4px', borderRadius: '4px',
-  border: '1px solid #ccc', fontSize: '14px',
+  padding: '8px 10px', border: '1px solid #ccc',
+  borderRadius: '6px', fontSize: '14px',
 }
-
-const btn = {
+const btnPrimary = {
   padding: '10px', backgroundColor: '#1e3a5f',
   color: 'white', border: 'none',
-  borderRadius: '4px', cursor: 'pointer', fontSize: '14px',
+  borderRadius: '6px', cursor: 'pointer', fontSize: '14px',
 }
 
 export default Login
