@@ -1,12 +1,14 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { progressStages, classifications, mentors } from '../data/mockData'
+import toast from 'react-hot-toast'
+import { useState, useEffect } from 'react'
+import { getMentors }          from '../services/api'
 
 const emptyForm = {
   name:           '',
   progress:       'Pre-FIC',
   classification: 'TBA',
-  mentor:         '',
+  mentor_id:         '',
   details:        '',
 }
 
@@ -14,30 +16,34 @@ function AddMember() {
   const [form, setForm]       = useState(emptyForm)
   const [submitted, setSubmitted] = useState(false)
   const navigate              = useNavigate()
+  const [mentors, setMentors] = useState([])
+
+  useEffect(() => {
+    getMentors()
+      .then(res => setMentors(res.data))
+      .catch(()  => console.error('Hindi ma-load ang mentors'))
+  }, [])
 
   function handleChange(e) {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
-  function handleSubmit() {
+  // Palitan ang handleSubmit
+  async function handleSubmit() {
     if (!form.name.trim()) {
-      alert('Pangalan ay kailangan!')
+      toast.error('Pangalan ay kailangan!')
       return
     }
-    // Sa susunod, POST request to backend dito
-    console.log('New Member:', form)
-    setSubmitted(true)
-    setTimeout(() => navigate('/members'), 1500)
-  }
-
-  if (submitted) {
-    return (
-      <div style={{ padding: '60px 24px', textAlign: 'center' }}>
-        <h2>✅ Member added successfully!</h2>
-        <p>Redirecting to Members page...</p>
-      </div>
-    )
+    try {
+      await createMember(form)
+      toast.success('Member na-add successfully! 🙏')
+      setTimeout(() => navigate('/members'), 1500)
+    } catch (err) {
+      toast.error(
+        err.response?.data?.error || 'May error sa pag-add ng member.'
+      )
+    }
   }
 
   return (
@@ -68,9 +74,11 @@ function AddMember() {
         </Field>
 
         <Field label="Mentor">
-          <select name="mentor" value={form.mentor} onChange={handleChange} style={input}>
+          <select name="mentor_id" value={form.mentor_id} onChange={handleChange} style={input}>
             <option value="">-- Pumili ng Mentor --</option>
-            {mentors.map(m => <option key={m}>{m}</option>)}
+            {mentors.map(m => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
           </select>
         </Field>
 

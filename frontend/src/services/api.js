@@ -21,6 +21,7 @@ export const updateMember = (id, data) => api.put(`/members/${id}`, data)
 export const deleteMember = (id)       => api.delete(`/members/${id}`)
 
 // Auth
-export const loginUser    = (data)     => api.post('/auth/login', data)
-export const registerUser = (data)     => api.post('/auth/register', data)
-export const getMe        = ()         => api.get('/auth/me')
+export const loginUser    = (data) => api.post('/auth/login', data)
+export const registerUser = (data) => api.post('/auth/register', data)
+export const getMe        = ()     => api.get('/auth/me')
+export const getMentors = () => api.get('/mentors')
