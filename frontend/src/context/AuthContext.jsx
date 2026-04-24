@@ -7,12 +7,11 @@ export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // I-check kung may existing token on app load
   useEffect(() => {
     const token = localStorage.getItem('fft_token')
     if (token) {
       getMe()
-        .then(res => setUser(res.data))
+        .then(res  => setUser(res.data))
         .catch(()  => localStorage.removeItem('fft_token'))
         .finally(() => setLoading(false))
     } else {
@@ -37,5 +36,4 @@ export function AuthProvider({ children }) {
   )
 }
 
-// Custom hook para madaling ma-access
 export const useAuth = () => useContext(AuthContext)
