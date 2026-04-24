@@ -6,8 +6,11 @@ function Navbar() {
       <span style={styles.brand}>🙏 Faith Follower Tracker</span>
       <div style={styles.links}>
         <Link to="/"           style={styles.link}>Dashboard</Link>
+        <Link to="/mentor-dashboard" style={styles.link}>Mentors</Link>
         <Link to="/members"    style={styles.link}>Members</Link>
         <Link to="/add-member" style={styles.link}>+ Add Member</Link>
+        <Link to="/settings"   style={styles.link}>Settings</Link>
+        <Link to="/logout"     style={styles.link}>Logout</Link>
       </div>
     </nav>
   )

@@ -9,12 +9,15 @@ const { notFound, errorHandler } = require('./middleware/errorMiddleware') // â†
 const app  = express()
 const PORT = process.env.PORT || 3001
 
+const mentorsRouter = require('./routes/mentors')
+
 app.use(cors({ origin: 'http://localhost:5173' }))
 app.use(express.json())
 
 // Routes
 app.use('/api/auth',    authRouter)
 app.use('/api/members', membersRouter)
+app.use('/api/mentors', mentorsRouter)
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'ğŸ™ FFT Backend is running!' })

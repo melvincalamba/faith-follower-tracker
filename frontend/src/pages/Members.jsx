@@ -8,8 +8,10 @@ import LoadingSpinner                 from '../components/LoadingSpinner'
 import ErrorMessage                   from '../components/ErrorMessage'
 import EmptyState                     from '../components/EmptyState'
 import ProgressBadge                  from '../components/ProgressBadge'
+import { useNavigate }                from 'react-router-dom'
 
 function Members() {
+  const navigate =  useNavigate()
   const [members,     setMembers]   = useState([])
   const [loading,     setLoading]   = useState(true)
   const [error,       setError]     = useState(null)
@@ -107,7 +109,17 @@ function Members() {
           </thead>
           <tbody>
             {filtered.map(member => (
-              <tr key={member.id} style={{ borderBottom: '1px solid #ddd' }}>
+              <tr
+                key={member.id}
+                onClick={() => navigate(`/members/${member.id}`)}
+                style={{
+                  borderBottom: '1px solid #ddd',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f4ff'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
                 <td style={td}>{member.name}</td>
                 <td style={td}><ProgressBadge progress={member.progress} /></td>
                 <td style={td}>{member.mentor         || '—'}</td>

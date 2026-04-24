@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { progressStages, classifications, mentors } from '../data/mockData'
 import toast from 'react-hot-toast'
+import { useState, useEffect } from 'react'
+import { getMentors }          from '../services/api'
 
 const emptyForm = {
   name:           '',
@@ -15,6 +17,13 @@ function AddMember() {
   const [form, setForm]       = useState(emptyForm)
   const [submitted, setSubmitted] = useState(false)
   const navigate              = useNavigate()
+  const [mentors, setMentors] = useState([])
+
+  useEffect(() => {
+    getMentors()
+      .then(res => setMentors(res.data))
+      .catch(()  => console.error('Hindi ma-load ang mentors'))
+  }, [])
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -66,9 +75,11 @@ function AddMember() {
         </Field>
 
         <Field label="Mentor">
-          <select name="mentor" value={form.mentor} onChange={handleChange} style={input}>
+          <select name="mentor_id" value={form.mentor_id} onChange={handleChange} style={input}>
             <option value="">-- Pumili ng Mentor --</option>
-            {mentors.map(m => <option key={m}>{m}</option>)}
+            {mentors.map(m => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
           </select>
         </Field>
 

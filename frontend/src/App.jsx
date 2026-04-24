@@ -3,9 +3,12 @@ import Dashboard      from './pages/Dashboard'
 import Members        from './pages/Members'
 import AddMember      from './pages/AddMember'
 import Login          from './pages/Login'
-import NotFound       from './pages/NotFound'          // ← BAGO
+import NotFound       from './pages/NotFound'
 import Navbar         from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
+import EditMember      from './pages/EditMember'
+import MemberDetail    from './pages/MemberDetail'
+import MentorDashboard from './pages/MentorDashboard'
 import { useAuth }    from './context/AuthContext'
 
 function App() {
@@ -25,6 +28,16 @@ function App() {
         }/>
         <Route path="/add-member" element={
           <ProtectedRoute><AddMember /></ProtectedRoute>
+        }/>
+
+        <Route path="/members/:id" element={
+          <ProtectedRoute><MemberDetail /></ProtectedRoute>
+        }/>
+        <Route path="/members/:id/edit" element={
+          <ProtectedRoute><EditMember /></ProtectedRoute>
+        }/>
+        <Route path="/mentor-dashboard" element={
+          <ProtectedRoute><MentorDashboard /></ProtectedRoute>
         }/>
 
         {/* 404 — dapat lagi itong huli */}
