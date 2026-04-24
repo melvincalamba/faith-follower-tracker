@@ -1,18 +1,48 @@
 function Login() {
+  const [form, setForm] = useState({ email: '', password: '' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const { login } = useAuth()
+  const navigate = useNavigate()
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
   return (
     <div style={{ padding: '60px 24px', maxWidth: '360px', margin: '0 auto' }}>
       <h2 style={{ textAlign: 'center' }}>🙏 Faith Follower Tracker</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <label>Email
-          <input type="email" placeholder="you@email.com" style={input} />
+          <input type="email" name="email" placeholder="you@email.com" style={input} onChange={handleChange} />
         </label>
         <label>Password
-          <input type="password" placeholder="••••••••" style={input} />
+          <input type="password" name="password" placeholder="••••••••" style={input} onChange={handleChange} />
         </label>
-        <button style={btn}>Login</button>
+        <button style={btn} onClick={handleLogin} disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
+        </button>
       </div>
     </div>
   )
+}
+
+async function handleLogin() {
+  setError('')
+  setLoading(true)
+  try {
+    const res = await loginUser(form)
+    login(res.data.token, res.data.user)
+
+    // Slight delay para ma-update muna ang AuthContext
+    // bago mag-navigate
+    setTimeout(() => navigate('/'), 100)
+  } catch (err) {
+    setError(err.response?.data?.error || 'May error sa login.')
+  } finally {
+    setLoading(false)
+  }
 }
 
 const input = {
