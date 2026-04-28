@@ -5,6 +5,8 @@ import { getMember, updateMember, getMentors } from '../services/api'
 import { progressStages, classifications }     from '../data/mockData'
 import LoadingSpinner           from '../components/LoadingSpinner'
 import ErrorMessage             from '../components/ErrorMessage'
+import { validateMemberForm } from '../utils/validation'
+import FormField              from '../components/FormField'
 
 const emptyForm = {
   name:           '',
@@ -22,6 +24,7 @@ function EditMember() {
   const [loading, setLoading]       = useState(true)
   const [saving,  setSaving]        = useState(false)
   const [error,   setError]         = useState(null)
+  const [errors, setErrors]         = useState({})
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,14 +56,17 @@ function EditMember() {
     fetchData()
   }, [id])
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-  }
+    const handleChange = (e) => {
+      const { name, value } = e.target
+      setForm(prev => ({ ...prev, [name]: value }))
+      if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }))
+    }
 
   const handleSubmit = async () => {
-    if (!form.name.trim()) {
-      toast.error('Pangalan ay kailangan!')
+    const { errors: validationErrors, isValid } = validateMemberForm(form)
+    if (!isValid) {
+      setErrors(validationErrors)
+      toast.error('Pakitama ang mga error bago mag-submit.')
       return
     }
     setSaving(true)

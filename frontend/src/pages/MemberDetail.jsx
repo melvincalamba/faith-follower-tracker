@@ -1,7 +1,7 @@
 import { useState, useEffect }  from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import toast                    from 'react-hot-toast'
-import { getMember, deleteMember } from '../services/api'
+import { getMember, deleteMember, getMemberHistory } from '../services/api'
 import { useAuth }              from '../context/AuthContext'
 import LoadingSpinner           from '../components/LoadingSpinner'
 import ErrorMessage             from '../components/ErrorMessage'
@@ -15,13 +15,18 @@ function MemberDetail() {
   const [loading, setLoading]     = useState(true)
   const [error,   setError]       = useState(null)
   const [deleting,setDeleting]    = useState(false)
+  const [history, setHistory]     = useState([])
 
   const fetchMember = async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await getMember(id)
-      setMember(res.data)
+      const [memberRes, historyRes] = await Promise.all([
+        getMember(id),
+        getMemberHistory(id),
+      ])
+      setMember(memberRes.data)
+      setHistory(historyRes.data)
     } catch (err) {
       setError('Hindi ma-load ang member. Subukan ulit.')
     } finally {
@@ -104,6 +109,47 @@ function MemberDetail() {
           <p style={{ margin: 0, color: '#333', lineHeight: '1.6' }}>
             {member.details || 'Walang details na naka-record.'}
           </p>
+        </div>
+        <div style={{ marginTop: '24px' }}>
+          <h3 style={{ margin: '0 0 12px', color: '#1e3a5f' }}>
+            📈 Progress History
+          </h3>
+
+          {history.length === 0 ? (
+            <p style={{ color: '#888', fontSize: '14px' }}>
+              Walang progress changes na naka-record.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {history.map(h => (
+                <div key={h.id} style={{
+                  padding:         '12px 16px',
+                  backgroundColor: '#f8f9ff',
+                  borderRadius:    '8px',
+                  border:          '1px solid #e8ecff',
+                  fontSize:        '14px',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>
+                      <strong>{h.from_stage || 'Start'}</strong>
+                      {' → '}
+                      <strong style={{ color: '#1e3a5f' }}>{h.to_stage}</strong>
+                    </span>
+                    <span style={{ color: '#888', fontSize: '12px' }}>
+                      {new Date(h.changed_at).toLocaleDateString('en-PH', {
+                        year: 'numeric', month: 'short', day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                  {h.changed_by && (
+                    <span style={{ color: '#888', fontSize: '12px' }}>
+                      by {h.changed_by}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

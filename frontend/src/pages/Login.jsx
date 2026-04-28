@@ -2,6 +2,8 @@ import { useState }    from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth }     from '../context/AuthContext'
 import { loginUser }   from '../services/api'
+import { validateLoginForm } from '../utils/validation'
+import FormField             from '../components/FormField'
 
 function Login() {
   const [form, setForm]       = useState({ email: '', password: '' })
@@ -9,20 +11,29 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const { login }             = useAuth()
   const navigate              = useNavigate()
+  const [errors, setErrors]   = useState({})
+
 
   function handleChange(e) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    if (errors[e.target.name]) {
+      setErrors(prev => ({ ...prev, [e.target.name]: null }))
+    }
   }
 
   async function handleLogin() {
-    setError('')
+    const { errors: validationErrors, isValid } = validateLoginForm(form)
+    if (!isValid) {
+      setErrors(validationErrors)
+      return
+    }
     setLoading(true)
     try {
       const res = await loginUser(form)
       login(res.data.token, res.data.user)
       setTimeout(() => navigate('/'), 100)
     } catch (err) {
-      setError(err.response?.data?.error || 'May error sa login.')
+      setErrors({ general: err.response?.data?.error || 'May error sa login.' })
     } finally {
       setLoading(false)
     }
@@ -51,31 +62,29 @@ function Login() {
           Sign in to continue
         </p>
 
-        {error && (
-          <p style={{ color: 'red', fontSize: '13px', marginBottom: '12px' }}>{error}</p>
+        {errors.general && (
+          <p style={{ color: '#e74c3c', fontSize: '13px', margin: '0 0 12px' }}>
+            ⚠️ {errors.general}
+          </p>
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <label style={labelStyle}>Email
+          <FormField label="Email" required error={errors.email}>
             <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
+              name="email" type="email"
+              value={form.email} onChange={handleChange}
               placeholder="you@email.com"
-              style={input}
+              style={inputStyle(errors.email)}
             />
-          </label>
-          <label style={labelStyle}>Password
+          </FormField>
+          <FormField label="Password" required error={errors.password}>
             <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
+              name="password" type="password"
+              value={form.password} onChange={handleChange}
               placeholder="••••••••"
-              style={input}
+              style={inputStyle(errors.password)}
             />
-          </label>
+          </FormField>
           <button
             onClick={handleLogin}
             disabled={loading}
@@ -93,10 +102,10 @@ const labelStyle = {
   display: 'flex', flexDirection: 'column',
   gap: '4px', fontSize: '14px', fontWeight: '600'
 }
-const input = {
-  padding: '8px 10px', border: '1px solid #ccc',
+const inputStyle = (error) => ({
+  padding: '8px 10px', border: error ? '1px solid #e74c3c' : '1px solid #ccc',
   borderRadius: '6px', fontSize: '14px',
-}
+})
 const btnPrimary = {
   padding: '10px', backgroundColor: '#1e3a5f',
   color: 'white', border: 'none',
