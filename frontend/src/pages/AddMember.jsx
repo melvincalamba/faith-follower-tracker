@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { progressStages, classifications, mentors } from '../data/mockData'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
-import { getMentors }          from '../services/api'
+import { createMember,getMentors }          from '../services/api'
 
 const emptyForm = {
   name:           '',
@@ -29,19 +29,22 @@ function AddMember() {
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
-  // Palitan ang handleSubmit
   async function handleSubmit() {
     if (!form.name.trim()) {
       toast.error('Pangalan ay kailangan!')
       return
     }
     try {
-      await createMember(form)
+      await createMember({
+        ...form,
+        // I-convert ang empty string sa null
+        mentor_id: form.mentor_id === '' ? null : form.mentor_id,
+      })
       toast.success('Member na-add successfully! 🙏')
       setTimeout(() => navigate('/members'), 1500)
     } catch (err) {
       toast.error(
-        err.response?.data?.error || 'May error sa pag-add ng member.'
+        err.response?.data?.message || 'May error sa pag-add ng member. Try again.'
       )
     }
   }
