@@ -2,16 +2,9 @@ import { ClipLoader } from 'react-spinners'
 
 function LoadingSpinner({ message = 'Loading...' }) {
   return (
-    <div style={{
-      display:        'flex',
-      flexDirection:  'column',
-      alignItems:     'center',
-      justifyContent: 'center',
-      padding:        '60px 24px',
-      gap:            '16px',
-    }}>
-      <ClipLoader color="#1e3a5f" size={48} />
-      <p style={{ color: '#888', fontSize: '14px' }}>{message}</p>
+    <div className="flex flex-col items-center justify-center py-20 gap-4">
+      <ClipLoader color="#c96d22" size={44} />
+      <p className="text-warm-400 text-sm">{message}</p>
     </div>
   )
 }

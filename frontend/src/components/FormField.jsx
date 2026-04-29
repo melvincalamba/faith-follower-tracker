@@ -1,33 +1,14 @@
 function FormField({ label, error, required, children, hint }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      <label style={{ fontWeight: '600', fontSize: '14px', color: '#333' }}>
+    <div className="flex flex-col gap-1">
+      <label className="label-text">
         {label}
-        {required && <span style={{ color: '#e74c3c', marginLeft: '4px' }}>*</span>}
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
-
-      {/* Hint text */}
-      {hint && (
-        <span style={{ fontSize: '12px', color: '#888', marginBottom: '2px' }}>
-          {hint}
-        </span>
-      )}
-
-      {/* Input with error border */}
-      <div style={{ position: 'relative' }}>
-        {children}
-      </div>
-
-      {/* Error message */}
+      {hint && <span className="text-xs text-warm-400 -mt-1">{hint}</span>}
+      {children}
       {error && (
-        <span style={{
-          fontSize:  '12px',
-          color:     '#e74c3c',
-          marginTop: '2px',
-          display:   'flex',
-          alignItems:'center',
-          gap:       '4px',
-        }}>
+        <span className="text-xs text-red-500 flex items-center gap-1 mt-0.5">
           ⚠️ {error}
         </span>
       )}
