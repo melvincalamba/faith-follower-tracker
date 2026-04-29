@@ -6,6 +6,7 @@ import { useAuth }              from '../context/AuthContext'
 import LoadingSpinner           from '../components/LoadingSpinner'
 import ErrorMessage             from '../components/ErrorMessage'
 import ProgressBadge            from '../components/ProgressBadge'
+import ConfirmModal             from '../components/ConfirmModal'
 
 function MemberDetail() {
   const { id }                    = useParams()
@@ -16,6 +17,7 @@ function MemberDetail() {
   const [error,   setError]       = useState(null)
   const [deleting,setDeleting]    = useState(false)
   const [history, setHistory]     = useState([])
+  const [modal, setModal]         = useState(false)
 
   const fetchMember = async () => {
     setLoading(true)
@@ -37,13 +39,13 @@ function MemberDetail() {
   useEffect(() => { fetchMember() }, [id])
 
   const handleDelete = async () => {
-    if (!window.confirm(`I-delete si ${member.name}?`)) return
+    setModal(false)
     setDeleting(true)
     try {
       await deleteMember(id)
-      toast.success(`${member.name} ay na-delete na!`)
+      toast.success(`${member.name} ay na-delete na! 🙏`)
       navigate('/members')
-    } catch (err) {
+    } catch {
       toast.error('Hindi ma-delete. Subukan ulit.')
       setDeleting(false)
     }
@@ -80,9 +82,9 @@ function MemberDetail() {
           </Link>
           {user?.role === 'admin' && (
             <button
-              onClick={handleDelete}
+              onClick={() => setModal(true)}
               disabled={deleting}
-              style={deleteBtn}
+              className="btn-danger px-4 py-2 rounded-xl text-sm font-semibold"
             >
               {deleting ? 'Deleting...' : '🗑️ Delete'}
             </button>
@@ -150,6 +152,14 @@ function MemberDetail() {
               ))}
             </div>
           )}
+          <ConfirmModal
+            isOpen={modal}
+            title="I-delete ang Member?"
+            message={`Sigurado ka bang gusto mong i-delete si ${member?.name}? Hindi na ito mababawi.`}
+            confirmLabel="🗑️ I-delete"
+            onConfirm={handleDelete}
+            onCancel={() => setModal(false)}
+          />
         </div>
       </div>
     </div>

@@ -8,11 +8,15 @@ import LoadingSpinner                from '../components/LoadingSpinner'
 import ErrorMessage                  from '../components/ErrorMessage'
 import EmptyState                    from '../components/EmptyState'
 import ProgressBadge                 from '../components/ProgressBadge'
+import ConfirmModal                  from '../components/ConfirmModal'
 
 function Members() {
   const [members,    setMembers]  = useState([])
   const [loading,    setLoading]  = useState(true)
   const [error,      setError]    = useState(null)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [memberToDelete, setMemberToDelete] = useState(null)
+  const [modal,      setModal]    = useState({ isOpen: false, id: null, name: '' })
   const [search,     setSearch]   = useState('')
   const [filter,     setFilter]   = useState('All')
   const [deleting,   setDeleting] = useState(null)
@@ -34,14 +38,13 @@ function Members() {
 
   useEffect(() => { fetchMembers() }, [])
 
-  const handleDelete = async (e, id, name) => {
-    e.stopPropagation()
-    if (!window.confirm(`I-delete si ${name}?`)) return
-    setDeleting(id)
+  const handleDelete = async () => {
+    setModal(prev => ({ ...prev, isOpen: false }))
+    setDeleting(modal.id)
     try {
-      await deleteMember(id)
-      setMembers(prev => prev.filter(m => m.id !== id))
-      toast.success(`${name} ay na-delete na!`)
+      await deleteMember(modal.id)
+      setMembers(prev => prev.filter(m => m.id !== modal.id))
+      toast.success(`${modal.name} ay na-delete na! 🙏`)
     } catch {
       toast.error('Hindi ma-delete. Subukan ulit.')
     } finally {
@@ -155,7 +158,10 @@ function Members() {
                   {user?.role === 'admin' && (
                     <td className="table-cell text-center">
                       <button
-                        onClick={e => handleDelete(e, member.id, member.name)}
+                        onClick={e => {
+                          e.stopPropagation()
+                          setModal({ isOpen: true, id: member.id, name: member.name })
+                        }}
                         disabled={deleting === member.id}
                         className="btn-danger text-xs px-3 py-1.5"
                       >
@@ -168,6 +174,14 @@ function Members() {
             </tbody>
           </table>
         )}
+        <ConfirmModal
+          isOpen={modal.isOpen}
+          title="I-delete ang Member?"
+          message={`Sigurado ka bang gusto mong i-delete si ${modal.name}? Hindi na ito mababawi.`}
+          confirmLabel="🗑️ I-delete"
+          onConfirm={handleDelete}
+          onCancel={() => setModal({ isOpen: false, id: null, name: '' })}
+        />
       </div>
     </div>
   )
