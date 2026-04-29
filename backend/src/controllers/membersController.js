@@ -50,31 +50,43 @@ const getAllMembers = asyncHandler(async (req, res) => {
 })
 
 // GET /api/members/:id
-const getMemberById = asyncHandler(async (req, res) => {
-  const { id } = req.params
-  const result = await pool.query(`
-    SELECT
-      m.id,
-      m.name,
-      m.details,
-      m.created_at,
-      m.updated_at,
-      ps.label AS progress,
-      c.label  AS classification,
-      u.name   AS mentor
-    FROM members m
-    LEFT JOIN progress_stages ps ON m.progress_stage_id = ps.id
-    LEFT JOIN classifications  c  ON m.classification_id = c.id
-    LEFT JOIN users            u  ON m.mentor_id         = u.id
-    WHERE m.id = $1
-  `, [id])
+const getMemberById = async (req, res) => {
+  try {
+    const { id } = req.params
 
-  if (result.rows.length === 0) {
-    res.status(404)
-    throw new Error('Member not found.')
+    // ← I-validate muna kung valid number ang id
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid member ID.' })
+    }
+
+    const result = await pool.query(`
+      SELECT
+        m.id,
+        m.name,
+        m.details,
+        m.created_at,
+        m.updated_at,
+        ps.label  AS progress,
+        c.label   AS classification,
+        u.name    AS mentor
+      FROM members m
+      LEFT JOIN progress_stages ps ON m.progress_stage_id  = ps.id
+      LEFT JOIN classifications  c  ON m.classification_id  = c.id
+      LEFT JOIN users            u  ON m.mentor_id          = u.id
+      WHERE m.id = $1
+    `, [id])
+
+    // ← Direktang mag-return ng 404 — hindi mag-throw ng error
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Member not found.' })
+    }
+
+    res.json(result.rows[0])
+  } catch (err) {
+    console.error('getMemberById error:', err)
+    res.status(500).json({ error: 'Server error' })
   }
-  res.json(result.rows[0])
-})
+}
 
 const getMemberHistory = async (req, res) => {
   try {

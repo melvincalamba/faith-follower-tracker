@@ -16,4 +16,14 @@ function FormField({ label, error, required, children, hint }) {
   )
 }
 
+import PropTypes from 'prop-types'
+
+FormField.propTypes = {
+  label:    PropTypes.string.isRequired,
+  error:    PropTypes.string,
+  required: PropTypes.bool,
+  hint:     PropTypes.string,
+  children: PropTypes.node.isRequired,
+}
+
 export default FormField

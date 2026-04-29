@@ -1,3 +1,12 @@
+import PropTypes from 'prop-types'
+
+EmptyState.propTypes = {
+  icon:    PropTypes.string,
+  title:   PropTypes.string.isRequired,
+  message: PropTypes.string.isRequired,
+  action:  PropTypes.node,
+}
+
 function EmptyState({ icon = '🙏', title, message, action }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">

@@ -13,6 +13,22 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// Idagdag pagkatapos ng request interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Kung 401 at expired ang token, i-logout
+    if (error.response?.status === 401) {
+      const isLoginRoute = error.config.url.includes('/auth/login')
+      if (!isLoginRoute) {
+        localStorage.removeItem('fft_token')
+        window.location.href = '/login'
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
 // Members
 export const getMembers   = ()         => api.get('/members')
 export const getMember    = (id)       => api.get(`/members/${id}`)

@@ -16,4 +16,10 @@ function ProgressBadge({ progress }) {
   )
 }
 
+import PropTypes from 'prop-types'
+
+ProgressBadge.propTypes = {
+  progress: PropTypes.string.isRequired,
+}
+
 export default ProgressBadge

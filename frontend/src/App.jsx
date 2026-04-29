@@ -1,21 +1,21 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Dashboard      from './pages/Dashboard'
-import Members        from './pages/Members'
-import AddMember      from './pages/AddMember'
-import Login          from './pages/Login'
-import NotFound       from './pages/NotFound'
-import Navbar         from './components/Navbar'
-import ProtectedRoute from './components/ProtectedRoute'
-import EditMember      from './pages/EditMember'
-import MemberDetail    from './pages/MemberDetail'
-import MentorDashboard from './pages/MentorDashboard'
-import { useAuth }    from './context/AuthContext'
+import { useAuth }        from './context/AuthContext'
+import Navbar             from './components/Navbar'
+import ProtectedRoute     from './components/ProtectedRoute'
+import Dashboard          from './pages/Dashboard'
+import Members            from './pages/Members'
+import AddMember          from './pages/AddMember'
+import Login              from './pages/Login'
+import NotFound           from './pages/NotFound'
+import EditMember         from './pages/EditMember'
+import MemberDetail       from './pages/MemberDetail'
+import MentorDashboard    from './pages/MentorDashboard'
 
-function App() {
+function AppLayout() {
   const { user } = useAuth()
 
   return (
-    <BrowserRouter>
+    <>
       {user && <Navbar />}
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -29,7 +29,6 @@ function App() {
         <Route path="/add-member" element={
           <ProtectedRoute><AddMember /></ProtectedRoute>
         }/>
-
         <Route path="/members/:id" element={
           <ProtectedRoute><MemberDetail /></ProtectedRoute>
         }/>
@@ -40,9 +39,16 @@ function App() {
           <ProtectedRoute><MentorDashboard /></ProtectedRoute>
         }/>
 
-        {/* 404 — dapat lagi itong huli */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+    </>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppLayout />
     </BrowserRouter>
   )
 }

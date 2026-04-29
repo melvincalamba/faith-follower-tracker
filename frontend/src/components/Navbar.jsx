@@ -1,16 +1,17 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth }           from '../context/AuthContext'
 
-const navLinks = [
-  { to: '/',                 label: 'Dashboard' },
-  { to: '/members',          label: 'Members'   },
-  { to: '/add-member',       label: '+ Add Member' },
-  { to: '/mentor-dashboard', label: 'Mentors'   },
-]
-
 function Navbar() {
+  // ✅ useAuth ay NASA LOOB ng function component
   const { user, logout } = useAuth()
   const location         = useLocation()
+
+  const navLinks = [
+    { to: '/',                 label: 'Dashboard',    roles: ['admin', 'mentor'] },
+    { to: '/members',          label: 'Members',      roles: ['admin', 'mentor'] },
+    { to: '/add-member',       label: '+ Add Member', roles: ['admin']           },
+    { to: '/mentor-dashboard', label: 'Mentors',      roles: ['admin', 'mentor'] },
+  ].filter(link => link.roles.includes(user?.role))
 
   return (
     <nav className="bg-warm-800 shadow-md sticky top-0 z-50">
