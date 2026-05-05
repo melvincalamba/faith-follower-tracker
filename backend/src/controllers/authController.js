@@ -8,9 +8,27 @@ const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body
 
-    // Validation
-    if (!name || !email || !password) {
+    // ← Mas mahigpit na validation
+    if (!name?.trim() || !email?.trim() || !password) {
       return res.status(400).json({ error: 'Name, email, at password ay kailangan.' })
+    }
+
+    if (name.trim().length < 2) {
+      return res.status(400).json({ error: 'Name ay dapat hindi bababa sa 2 characters.' })
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Hindi valid na email format.' })
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password ay dapat hindi bababa sa 6 characters.' })
+    }
+
+    // ← Valid roles lang
+    const validRoles = ['admin', 'mentor']
+    if (role && !validRoles.includes(role)) {
+      return res.status(400).json({ error: 'Invalid role.' })
     }
 
     // Check kung may existing na user
@@ -21,20 +39,17 @@ const register = async (req, res) => {
       return res.status(409).json({ error: 'Email ay already in use.' })
     }
 
-    // I-hash ang password
     const salt           = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
 
-    // I-save sa DB
     const result = await pool.query(`
       INSERT INTO users (name, email, password, role)
       VALUES ($1, $2, $3, $4)
       RETURNING id, name, email, role
-    `, [name, email, hashedPassword, role || 'mentor'])
+    `, [name.trim(), email.trim(), hashedPassword, role || 'mentor'])
 
     const newUser = result.rows[0]
 
-    // Gumawa ng JWT
     const token = jwt.sign(
       { id: newUser.id, role: newUser.role },
       process.env.JWT_SECRET,

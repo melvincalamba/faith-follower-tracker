@@ -1,28 +1,11 @@
 function ErrorMessage({ message, onRetry }) {
   return (
-    <div style={{
-      display:        'flex',
-      flexDirection:  'column',
-      alignItems:     'center',
-      justifyContent: 'center',
-      padding:        '60px 24px',
-      gap:            '12px',
-      textAlign:      'center',
-    }}>
-      <span style={{ fontSize: '48px' }}>⚠️</span>
-      <h3 style={{ margin: 0, color: '#c0392b' }}>May Error na Nangyari</h3>
-      <p style={{ margin: 0, color: '#888', fontSize: '14px' }}>{message}</p>
+    <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+      <span className="text-5xl">⚠️</span>
+      <h3 className="text-lg font-semibold text-red-600 m-0">May Error na Nangyari</h3>
+      <p className="text-warm-400 text-sm max-w-xs m-0">{message}</p>
       {onRetry && (
-        <button onClick={onRetry} style={{
-          marginTop:       '8px',
-          padding:         '8px 20px',
-          backgroundColor: '#1e3a5f',
-          color:           'white',
-          border:          'none',
-          borderRadius:    '6px',
-          cursor:          'pointer',
-          fontSize:        '14px',
-        }}>
+        <button onClick={onRetry} className="btn-primary mt-2">
           Try Again
         </button>
       )}

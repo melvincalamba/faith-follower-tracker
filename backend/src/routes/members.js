@@ -6,6 +6,7 @@ const {
   createMember,
   updateMember,
   deleteMember,
+  getMemberHistory,
 } = require('../controllers/membersController')
 const { protect, adminOnly } = require('../middleware/authMiddleware')
 
@@ -14,6 +15,7 @@ router.get('/',       protect,              getAllMembers)
 router.get('/:id',    protect,              getMemberById)
 router.post('/',      protect,              createMember)
 router.put('/:id',    protect,              updateMember)
-router.delete('/:id', protect, adminOnly,   deleteMember)  // Admin only ang delete
+router.delete('/:id', protect, adminOnly,   deleteMember)
+router.get('/:id/history', protect,     getMemberHistory)
 
 module.exports = router

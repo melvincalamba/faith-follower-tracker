@@ -9,14 +9,16 @@ const pool = new Pool({
   database: process.env.DB_NAME,
 })
 
-// Test connection on startup
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('❌ Database connection error:', err.message)
-    return
-  }
-  release()
-  console.log('✅ Connected to PostgreSQL database!')
-})
+// Test connection — hindi sa test environment
+if (process.env.NODE_ENV !== 'test') {
+  pool.connect((err, client, release) => {
+    if (err) {
+      console.error('❌ Database connection error:', err.message)
+      return
+    }
+    release()
+    console.log('✅ Connected to PostgreSQL database!')
+  })
+}
 
 module.exports = pool

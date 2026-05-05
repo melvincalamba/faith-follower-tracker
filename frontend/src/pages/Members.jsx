@@ -1,24 +1,27 @@
-import { useState, useEffect }        from 'react'
-import { Link }                       from 'react-router-dom'
-import toast                          from 'react-hot-toast'
-import { getMembers, deleteMember }   from '../services/api'
-import { progressStages }             from '../data/mockData'
-import { useAuth }                    from '../context/AuthContext'
-import LoadingSpinner                 from '../components/LoadingSpinner'
-import ErrorMessage                   from '../components/ErrorMessage'
-import EmptyState                     from '../components/EmptyState'
-import ProgressBadge                  from '../components/ProgressBadge'
-import { useNavigate }                from 'react-router-dom'
+import { useState, useEffect }       from 'react'
+import { Link, useNavigate }         from 'react-router-dom'
+import toast                         from 'react-hot-toast'
+import { getMembers, deleteMember }  from '../services/api'
+import { progressStages }            from '../data/mockData'
+import { useAuth }                   from '../context/AuthContext'
+import LoadingSpinner                from '../components/LoadingSpinner'
+import ErrorMessage                  from '../components/ErrorMessage'
+import EmptyState                    from '../components/EmptyState'
+import ProgressBadge                 from '../components/ProgressBadge'
+import ConfirmModal                  from '../components/ConfirmModal'
 
 function Members() {
-  const navigate =  useNavigate()
-  const [members,     setMembers]   = useState([])
-  const [loading,     setLoading]   = useState(true)
-  const [error,       setError]     = useState(null)
-  const [search,      setSearch]    = useState('')
-  const [filterStage, setFilter]    = useState('All')
-  const [deleting,    setDeleting]  = useState(null)
-  const { user }                    = useAuth()
+  const [members,    setMembers]  = useState([])
+  const [loading,    setLoading]  = useState(true)
+  const [error,      setError]    = useState(null)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [memberToDelete, setMemberToDelete] = useState(null)
+  const [modal,      setModal]    = useState({ isOpen: false, id: null, name: '' })
+  const [search,     setSearch]   = useState('')
+  const [filter,     setFilter]   = useState('All')
+  const [deleting,   setDeleting] = useState(null)
+  const { user }                  = useAuth()
+  const navigate                  = useNavigate()
 
   const fetchMembers = async () => {
     setLoading(true)
@@ -26,7 +29,7 @@ function Members() {
     try {
       const res = await getMembers()
       setMembers(res.data)
-    } catch (err) {
+    } catch {
       setError('Hindi ma-load ang mga members. Subukan ulit.')
     } finally {
       setLoading(false)
@@ -35,15 +38,15 @@ function Members() {
 
   useEffect(() => { fetchMembers() }, [])
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`I-delete si ${name}?`)) return
-    setDeleting(id)
+  const handleDelete = async () => {
+    setModal(prev => ({ ...prev, isOpen: false }))
+    setDeleting(modal.id)
     try {
-      await deleteMember(id)
-      setMembers(prev => prev.filter(m => m.id !== id))
-      toast.success(`${name} ay na-delete na!`)
-    } catch (err) {
-      toast.error('Hindi ma-delete ang member. Subukan ulit.')
+      await deleteMember(modal.id)
+      setMembers(prev => prev.filter(m => m.id !== modal.id))
+      toast.success(`${modal.name} ay na-delete na! 🙏`)
+    } catch {
+      toast.error('Hindi ma-delete. Subukan ulit.')
     } finally {
       setDeleting(null)
     }
@@ -51,7 +54,7 @@ function Members() {
 
   const filtered = members.filter(m => {
     const matchSearch = m.name.toLowerCase().includes(search.toLowerCase())
-    const matchStage  = filterStage === 'All' || m.progress === filterStage
+    const matchStage  = filter === 'All' || m.progress === filter
     return matchSearch && matchStage
   })
 
@@ -59,98 +62,129 @@ function Members() {
   if (error)   return <ErrorMessage  message={error} onRetry={fetchMembers} />
 
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Members ({filtered.length})</h2>
-        <Link to="/add-member" style={addBtn}>+ Add Member</Link>
+    <div className="max-w-7xl mx-auto px-6 py-8">
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="page-title">Members</h1>
+          <p className="text-warm-500 text-sm mt-1">
+            {filtered.length} member{filtered.length !== 1 ? 's' : ''} na nahanap
+          </p>
+        </div>
+        <Link to="/add-member" className="btn-primary no-underline">
+          + Add Member
+        </Link>
       </div>
 
       {/* Search & Filter */}
-      <div style={{ display: 'flex', gap: '12px', margin: '16px 0' }}>
-        <input
-          type="text"
-          placeholder="Search by name..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={inputStyle}
-        />
-        <select value={filterStage} onChange={e => setFilter(e.target.value)} style={inputStyle}>
-          <option value="All">All Stages</option>
-          {progressStages.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+      <div className="card mb-6">
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-400">🔍</span>
+            <input
+              type="text"
+              placeholder="Search by name..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="input-field pl-9"
+            />
+          </div>
+          <select
+            value={filter}
+            onChange={e => setFilter(e.target.value)}
+            className="input-field w-48"
+          >
+            <option value="All">All Stages</option>
+            {progressStages.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Empty State */}
-      {filtered.length === 0 ? (
-        <EmptyState
-          icon="🔍"
-          title="Walang Resulta"
-          message={
-            search || filterStage !== 'All'
-              ? 'Walang members na nakakatugon sa iyong search/filter.'
-              : 'Wala pang members. Mag-add na!'
-          }
-          action={
-            (!search && filterStage === 'All') &&
-            <Link to="/add-member" style={addBtn}>+ Add Member</Link>
-          }
-        />
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#1e3a5f', color: 'white' }}>
-              <th style={th}>Name</th>
-              <th style={th}>Progress</th>
-              <th style={th}>Mentor</th>
-              <th style={th}>Classification</th>
-              <th style={th}>Details</th>
-              {user?.role === 'admin' && <th style={th}>Actions</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(member => (
-              <tr
-                key={member.id}
-                onClick={() => navigate(`/members/${member.id}`)}
-                style={{
-                  borderBottom: '1px solid #ddd',
-                  cursor: 'pointer',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f0f4ff'}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                <td style={td}>{member.name}</td>
-                <td style={td}><ProgressBadge progress={member.progress} /></td>
-                <td style={td}>{member.mentor         || '—'}</td>
-                <td style={td}>{member.classification || '—'}</td>
-                <td style={{ ...td, color: '#555', fontSize: '13px' }}>
-                  {member.details || '—'}
-                </td>
+      {/* Table */}
+      <div className="card p-0 overflow-hidden">
+        {filtered.length === 0 ? (
+          <div className="p-8">
+            <EmptyState
+              icon="🔍"
+              title="Walang Resulta"
+              message={
+                search || filter !== 'All'
+                  ? 'Walang members na nakakatugon sa iyong search.'
+                  : 'Wala pang members. Mag-add na!'
+              }
+              action={
+                !search && filter === 'All' &&
+                <Link to="/add-member" className="btn-primary no-underline">
+                  + Add Member
+                </Link>
+              }
+            />
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th className="table-header">Name</th>
+                <th className="table-header">Progress</th>
+                <th className="table-header">Mentor</th>
+                <th className="table-header">Classification</th>
+                <th className="table-header">Details</th>
                 {user?.role === 'admin' && (
-                  <td style={td}>
-                    <button
-                      onClick={() => handleDelete(member.id, member.name)}
-                      disabled={deleting === member.id}
-                      style={deleteBtn}
-                    >
-                      {deleting === member.id ? '...' : 'Delete'}
-                    </button>
-                  </td>
+                  <th className="table-header text-center">Actions</th>
                 )}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {filtered.map(member => (
+                <tr
+                  key={member.id}
+                  className="table-row"
+                  onClick={() => navigate(`/members/${member.id}`)}
+                >
+                  <td className="table-cell font-semibold text-warm-900">
+                    {member.name}
+                  </td>
+                  <td className="table-cell">
+                    <ProgressBadge progress={member.progress} />
+                  </td>
+                  <td className="table-cell">{member.mentor         || '—'}</td>
+                  <td className="table-cell">{member.classification || '—'}</td>
+                  <td className="table-cell text-warm-500 max-w-xs truncate">
+                    {member.details || '—'}
+                  </td>
+                  {user?.role === 'admin' && (
+                    <td className="table-cell text-center">
+                      <button
+                        onClick={e => {
+                          e.stopPropagation()
+                          setModal({ isOpen: true, id: member.id, name: member.name })
+                        }}
+                        disabled={deleting === member.id}
+                        className="btn-danger text-xs px-3 py-1.5"
+                      >
+                        {deleting === member.id ? '...' : '🗑️ Delete'}
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <ConfirmModal
+          isOpen={modal.isOpen}
+          title="I-delete ang Member?"
+          message={`Sigurado ka bang gusto mong i-delete si ${modal.name}? Hindi na ito mababawi.`}
+          confirmLabel="🗑️ I-delete"
+          onConfirm={handleDelete}
+          onCancel={() => setModal({ isOpen: false, id: null, name: '' })}
+        />
+      </div>
     </div>
   )
 }
-
-const th         = { padding: '10px 16px', textAlign: 'left' }
-const td         = { padding: '10px 16px' }
-const inputStyle = { padding: '8px 12px', border: '1px solid #ccc', borderRadius: '6px', fontSize: '14px' }
-const addBtn     = { padding: '8px 16px', backgroundColor: '#1e3a5f', color: 'white', borderRadius: '6px', textDecoration: 'none', fontSize: '14px' }
-const deleteBtn  = { padding: '6px 12px', backgroundColor: '#e74c3c', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }
 
 export default Members

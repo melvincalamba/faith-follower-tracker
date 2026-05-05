@@ -1,18 +1,19 @@
+import PropTypes from 'prop-types'
+
+EmptyState.propTypes = {
+  icon:    PropTypes.string,
+  title:   PropTypes.string.isRequired,
+  message: PropTypes.string.isRequired,
+  action:  PropTypes.node,
+}
+
 function EmptyState({ icon = '🙏', title, message, action }) {
   return (
-    <div style={{
-      display:        'flex',
-      flexDirection:  'column',
-      alignItems:     'center',
-      justifyContent: 'center',
-      padding:        '60px 24px',
-      gap:            '12px',
-      textAlign:      'center',
-    }}>
-      <span style={{ fontSize: '48px' }}>{icon}</span>
-      <h3 style={{ margin: 0, color: '#1e3a5f' }}>{title}</h3>
-      <p style={{ margin: 0, color: '#888', fontSize: '14px' }}>{message}</p>
-      {action && action}
+    <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+      <span className="text-5xl">{icon}</span>
+      <h3 className="text-lg font-semibold text-warm-800 m-0">{title}</h3>
+      <p className="text-warm-400 text-sm max-w-xs m-0">{message}</p>
+      {action && <div className="mt-2">{action}</div>}
     </div>
   )
 }

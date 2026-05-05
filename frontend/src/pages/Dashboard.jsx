@@ -1,15 +1,24 @@
 import { useState, useEffect }  from 'react'
 import { Link }                 from 'react-router-dom'
 import { getMembers }           from '../services/api'
+import { useAuth }              from '../context/AuthContext'
 import LoadingSpinner           from '../components/LoadingSpinner'
 import ErrorMessage             from '../components/ErrorMessage'
 import EmptyState               from '../components/EmptyState'
 import ProgressBadge            from '../components/ProgressBadge'
 
+const statConfig = [
+  { key: 'total',    label: 'Total Members',  icon: '👥', color: 'bg-warm-700'    },
+  { key: 'preFIC',   label: 'Pre-FIC',        icon: '🌱', color: 'bg-orange-400'  },
+  { key: 'progress', label: 'In Progress',    icon: '📖', color: 'bg-blue-500'    },
+  { key: 'cellDev',  label: 'Cell Dev',       icon: '✝️', color: 'bg-accent-600'  },
+]
+
 function Dashboard() {
-  const [members, setMembers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error,   setError]   = useState(null)
+  const { user }              = useAuth()
+  const [members,  setMembers] = useState([])
+  const [loading,  setLoading] = useState(true)
+  const [error,    setError]   = useState(null)
 
   const fetchMembers = async () => {
     setLoading(true)
@@ -17,7 +26,7 @@ function Dashboard() {
     try {
       const res = await getMembers()
       setMembers(res.data)
-    } catch (err) {
+    } catch {
       setError('Hindi ma-load ang mga members. Subukan ulit.')
     } finally {
       setLoading(false)
@@ -26,92 +35,91 @@ function Dashboard() {
 
   useEffect(() => { fetchMembers() }, [])
 
-  const totalMembers = members.length
-  const inPreFIC     = members.filter(m => m.progress === 'Pre-FIC').length
-  const inCellDev    = members.filter(m => m.progress === 'CellDev').length
-  const inProgress   = members.filter(m =>
-    ['FIC1', 'FIC2', 'Pre-CellDev'].includes(m.progress)
-  ).length
+  const stats = {
+    total:    members.length,
+    preFIC:   members.filter(m => m.progress === 'Pre-FIC').length,
+    progress: members.filter(m => ['FIC1','FIC2','Pre-CellDev'].includes(m.progress)).length,
+    cellDev:  members.filter(m => m.progress === 'CellDev').length,
+  }
 
-  // ─── States ───────────────────────────────────────────
   if (loading) return <LoadingSpinner message="Kinukuha ang mga members..." />
   if (error)   return <ErrorMessage  message={error} onRetry={fetchMembers} />
 
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Dashboard</h2>
-        <Link to="/add-member" style={addBtn}>+ Add Member</Link>
+    <div className="max-w-7xl mx-auto px-6 py-8">
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="page-title">
+            Magandang araw, {user?.name?.split(' ')[0]}! 👋
+          </h1>
+          <p className="text-warm-500 text-sm mt-1">
+            Ito ang overview ng ating discipleship pipeline.
+          </p>
+        </div>
+        <Link to="/add-member" className="btn-primary no-underline">
+          + Add Member
+        </Link>
       </div>
 
       {/* Stat Cards */}
-      <div style={{ display: 'flex', gap: '16px', marginTop: '24px', flexWrap: 'wrap' }}>
-        <StatCard label="Total Members" value={totalMembers} color="#1e3a5f" />
-        <StatCard label="Pre-FIC"       value={inPreFIC}     color="#e67e22" />
-        <StatCard label="In Progress"   value={inProgress}   color="#2980b9" />
-        <StatCard label="Cell Dev"      value={inCellDev}    color="#27ae60" />
+      <div className="grid grid-cols-4 gap-4 mb-10">
+        {statConfig.map(s => (
+          <div key={s.key} className={`${s.color} rounded-2xl p-5 text-white shadow-card`}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-3xl">{s.icon}</span>
+              <span className="text-4xl font-bold">{stats[s.key]}</span>
+            </div>
+            <p className="text-sm font-medium opacity-90 m-0">{s.label}</p>
+          </div>
+        ))}
       </div>
 
       {/* Recent Members */}
-      <h3 style={{ marginTop: '32px' }}>Recent Members</h3>
+      <div className="card">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="section-title m-0">Recent Members</h2>
+          <Link to="/members" className="text-primary-600 hover:text-primary-700 text-sm font-medium no-underline">
+            View All →
+          </Link>
+        </div>
 
-      {members.length === 0 ? (
-        <EmptyState
-          icon="👥"
-          title="Wala pang Members"
-          message="Mag-add ng unang member para magsimula."
-          action={
-            <Link to="/add-member" style={addBtn}>+ Add Member</Link>
-          }
-        />
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '8px' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#1e3a5f', color: 'white' }}>
-              <th style={th}>Name</th>
-              <th style={th}>Progress</th>
-              <th style={th}>Mentor</th>
-              <th style={th}>Classification</th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.slice(0, 5).map(member => (
-              <tr key={member.id} style={{ borderBottom: '1px solid #ddd' }}>
-                <td style={td}>{member.name}</td>
-                <td style={td}><ProgressBadge progress={member.progress} /></td>
-                <td style={td}>{member.mentor  || '—'}</td>
-                <td style={td}>{member.classification || '—'}</td>
+        {members.length === 0 ? (
+          <EmptyState
+            icon="👥"
+            title="Wala pang Members"
+            message="Mag-add ng unang member para magsimula."
+            action={<Link to="/add-member" className="btn-primary no-underline">+ Add Member</Link>}
+          />
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr>
+                <th className="table-header rounded-tl-xl">Name</th>
+                <th className="table-header">Progress</th>
+                <th className="table-header">Mentor</th>
+                <th className="table-header rounded-tr-xl">Classification</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            </thead>
+            <tbody>
+              {members.slice(0, 6).map(member => (
+                <tr key={member.id} className="table-row">
+                  <td className="table-cell font-medium">{member.name}</td>
+                  <td className="table-cell">
+                    <ProgressBadge progress={member.progress} />
+                  </td>
+                  <td className="table-cell">{member.mentor         || '—'}</td>
+                  <td className="table-cell">{member.classification || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
     </div>
   )
-}
-
-function StatCard({ label, value, color }) {
-  return (
-    <div style={{
-      padding:         '20px 28px',
-      backgroundColor: color,
-      borderRadius:    '8px',
-      minWidth:        '150px',
-      textAlign:       'center',
-      color:           'white',
-    }}>
-      <h2 style={{ margin: 0 }}>{value}</h2>
-      <p style={{ margin: '4px 0 0', fontSize: '13px', opacity: 0.85 }}>{label}</p>
-    </div>
-  )
-}
-
-const th     = { padding: '10px 16px', textAlign: 'left' }
-const td     = { padding: '10px 16px' }
-const addBtn = {
-  padding: '8px 16px', backgroundColor: '#1e3a5f',
-  color: 'white', borderRadius: '6px',
-  textDecoration: 'none', fontSize: '14px',
 }
 
 export default Dashboard
