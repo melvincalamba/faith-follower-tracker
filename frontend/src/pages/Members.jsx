@@ -132,45 +132,63 @@ function Members() {
                 <th className="table-header">Mentor</th>
                 <th className="table-header">Classification</th>
                 <th className="table-header">Details</th>
-                {user?.role === 'admin' && (
-                  <th className="table-header text-center">Actions</th>
-                )}
+                <th className="table-header text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(member => (
-                <tr
-                  key={member.id}
-                  className="table-row"
-                  onClick={() => navigate(`/members/${member.id}`)}
-                >
-                  <td className="table-cell font-semibold text-warm-900">
-                    {member.name}
-                  </td>
-                  <td className="table-cell">
-                    <ProgressBadge progress={member.progress} />
-                  </td>
-                  <td className="table-cell">{member.mentor         || '—'}</td>
-                  <td className="table-cell">{member.classification || '—'}</td>
-                  <td className="table-cell text-warm-500 max-w-xs truncate">
-                    {member.details || '—'}
-                  </td>
-                  {user?.role === 'admin' && (
-                    <td className="table-cell text-center">
-                      <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          setModal({ isOpen: true, id: member.id, name: member.name })
-                        }}
-                        disabled={deleting === member.id}
-                        className="btn-danger text-xs px-3 py-1.5"
-                      >
-                        {deleting === member.id ? '...' : '🗑️ Delete'}
-                      </button>
+              {filtered.map(member => {
+                // ← Pwedeng mag-edit kung admin O kung ikaw ang mentor niya
+                const canEdit   = user?.role === 'admin' || member.mentor_id === user?.id
+                const canDelete = user?.role === 'admin'
+
+                return (
+                  <tr
+                    key={member.id}
+                    className="table-row"
+                    onClick={() => navigate(`/members/${member.id}`)}
+                  >
+                    <td className="table-cell font-semibold text-warm-900">
+                      {member.name}
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td className="table-cell">
+                      <ProgressBadge progress={member.progress} />
+                    </td>
+                    <td className="table-cell">{member.mentor         || '—'}</td>
+                    <td className="table-cell">{member.classification || '—'}</td>
+                    <td className="table-cell text-warm-500 max-w-xs truncate">
+                      {member.details || '—'}
+                    </td>
+                    <td className="table-cell">
+                      <div
+                        className="flex gap-2 justify-center"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        {canEdit && (
+                          <button
+                            onClick={() => navigate(`/members/${member.id}/edit`)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white
+                                      text-xs px-3 py-1.5 rounded-lg transition-all"
+                          >
+                            ✏️ Edit
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            onClick={e => handleDelete(e, member.id, member.name)}
+                            disabled={deleting === member.id}
+                            className="btn-danger text-xs px-3 py-1.5"
+                          >
+                            {deleting === member.id ? '...' : '🗑️ Delete'}
+                          </button>
+                        )}
+                        {!canEdit && !canDelete && (
+                          <span className="text-warm-300 text-xs">View only</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}

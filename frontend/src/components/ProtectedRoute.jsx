@@ -15,11 +15,6 @@ function ProtectedRoute({ children, adminOnly = false }) {
 
   if (!user) return <Navigate to="/login" replace />
 
-  // Mentor na pumunta sa add-member — i-redirect sa mentor dashboard
-  if (user.role === 'mentor' && location.pathname === '/add-member') {
-    return <Navigate to="/mentor-dashboard" replace />
-  }
-
   if (adminOnly && user.role !== 'admin') {
     return <Navigate to="/" replace />
   }

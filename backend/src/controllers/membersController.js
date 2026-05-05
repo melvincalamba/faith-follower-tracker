@@ -35,6 +35,7 @@ const getAllMembers = asyncHandler(async (req, res) => {
       m.id,
       m.name,
       m.details,
+      m.mentor_id,
       m.created_at,
       m.updated_at,
       ps.label AS progress,
@@ -112,67 +113,73 @@ const getMemberHistory = async (req, res) => {
 }
 
 // POST /api/members
-const createMember = asyncHandler(async (req, res) => {
-  const { name, progress, classification, mentor_id, details } = req.body
-  const validationErrors = validateMemberData(req.body)
+const createMember = async (req, res) => {
+  try {
+    const { name, progress, classification, details } = req.body
+
+    // ← Validation
+    const validationErrors = validateMemberData(req.body)
     if (validationErrors.length > 0) {
       return res.status(400).json({ error: validationErrors.join(' ') })
     }
 
+    const stageResult = await pool.query(
+      'SELECT id FROM progress_stages WHERE label = $1', [progress]
+    )
+    const progress_stage_id = stageResult.rows[0]?.id || null
 
-  if (!name?.trim()) {
-    res.status(400)
-    throw new Error('Name is required.')
+    const classResult = await pool.query(
+      'SELECT id FROM classifications WHERE label = $1', [classification]
+    )
+    const classification_id = classResult.rows[0]?.id || null
+
+    const mentor_id = req.user.id
+
+    const result = await pool.query(`
+      INSERT INTO members
+        (name, progress_stage_id, classification_id, mentor_id, details)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
+    `, [name, progress_stage_id, classification_id, mentor_id, details || null])
+
+    res.status(201).json({
+      message: 'Member created successfully!',
+      id:      result.rows[0].id,
+    })
+  } catch (err) {
+    console.error('createMember error:', err)
+    res.status(500).json({ error: 'Server error' })
   }
-
-  const stageResult = await pool.query(
-    'SELECT id FROM progress_stages WHERE label = $1', [progress]
-  )
-  const progress_stage_id = stageResult.rows[0]?.id || null
-
-  const classResult = await pool.query(
-    'SELECT id FROM classifications WHERE label = $1', [classification]
-  )
-  const classification_id = classResult.rows[0]?.id || null
-
-  const result = await pool.query(`
-    INSERT INTO members (name, progress_stage_id, classification_id, mentor_id, details)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING id
-  `, [name, progress_stage_id, classification_id, mentor_id || null, details || null])
-
-  res.status(201).json({
-    message: 'Member created successfully!',
-    id: result.rows[0].id
-  })
-})
+}
 
 // PUT /api/members/:id
 const updateMember = async (req, res) => {
   try {
-    const { id } = req.params
-    const { name, progress, classification, mentor_id, details } = req.body
-    const validationErrors = validateMemberData(req.body)
-      if (validationErrors.length > 0) {
-        return res.status(400).json({ error: validationErrors.join(' ') })
-      }
+    const { id }    = req.params
+    const { name, progress, classification, details } = req.body
 
-
-    // Kunin ang current progress para ma-track ang change
     const current = await pool.query(`
-      SELECT ps.label AS progress
+      SELECT
+        m.mentor_id,
+        ps.label AS progress
       FROM members m
       LEFT JOIN progress_stages ps ON m.progress_stage_id = ps.id
       WHERE m.id = $1
     `, [id])
 
     if (current.rows.length === 0) {
-      return res.status(404).json({ error: 'Member not found' })
+      return res.status(404).json({ error: 'Member not found.' })
+    }
+
+    if (req.user.role === 'mentor' &&
+        current.rows[0].mentor_id !== req.user.id) {
+      return res.status(403).json({
+        error: 'Hindi ka pwedeng mag-edit ng follow-up na hindi mo assigned.'
+      })
     }
 
     const oldProgress = current.rows[0].progress
 
-    // I-update ang progress_stage_id
     const stageResult = await pool.query(
       'SELECT id FROM progress_stages WHERE label = $1', [progress]
     )
@@ -189,19 +196,17 @@ const updateMember = async (req, res) => {
         name              = $1,
         progress_stage_id = $2,
         classification_id = $3,
-        mentor_id         = $4,
-        details           = $5,
+        details           = $4,
         updated_at        = NOW()
-      WHERE id = $6
-    `, [name, progress_stage_id, classification_id, mentor_id || null, details || null, id])
+      WHERE id = $5
+    `, [name, progress_stage_id, classification_id, details || null, id])
 
-    // I-log ang progress change kung nagbago
     if (oldProgress !== progress) {
       await pool.query(`
         INSERT INTO progress_history
-          (member_id, from_stage, to_stage, changed_by, notes)
-        VALUES ($1, $2, $3, $4, $5)
-      `, [id, oldProgress, progress, req.user.id, `Updated by ${req.user.id}`])
+          (member_id, from_stage, to_stage, changed_by)
+        VALUES ($1, $2, $3, $4)
+      `, [id, oldProgress, progress, req.user.id])
     }
 
     res.json({ message: 'Member updated successfully!' })

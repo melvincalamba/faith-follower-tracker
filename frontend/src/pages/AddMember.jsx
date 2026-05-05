@@ -1,39 +1,30 @@
-import { useState, useEffect }          from 'react'
-import { useNavigate }                  from 'react-router-dom'
-import toast                            from 'react-hot-toast'
-import { createMember, getMentors }     from '../services/api'
+import { useState }              from 'react'
+import { useNavigate, Link }     from 'react-router-dom'
+import toast                     from 'react-hot-toast'
+import { createMember }          from '../services/api'
 import { progressStages, classifications } from '../data/mockData'
-import { validateMemberForm }           from '../utils/validation'
-import FormField                        from '../components/FormField'
+import { validateMemberForm }    from '../utils/validation'
+import FormField                 from '../components/FormField'
+import { useAuth }               from '../context/AuthContext'
 
 const emptyForm = {
   name:           '',
   progress:       'Pre-FIC',
   classification: 'TBA',
-  mentor_id:      '',
   details:        '',
 }
 
 function AddMember() {
-  const [form,    setForm]    = useState(emptyForm)
-  const [errors,  setErrors]  = useState({})
-  const [mentors, setMentors] = useState([])
-  const [saving,  setSaving]  = useState(false)
-  const navigate              = useNavigate()
-
-  useEffect(() => {
-    getMentors()
-      .then(res => setMentors(res.data))
-      .catch(()  => toast.error('Hindi ma-load ang mentors.'))
-  }, [])
+  const [form,   setForm]   = useState(emptyForm)
+  const [errors, setErrors] = useState({})
+  const [saving, setSaving] = useState(false)
+  const navigate            = useNavigate()
+  const { user }            = useAuth()
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
-    // I-clear ang error ng field na binago
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }))
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }))
   }
 
   const handleSubmit = async () => {
@@ -43,15 +34,14 @@ function AddMember() {
       toast.error('Pakitama ang mga error bago mag-submit.')
       return
     }
-
     setSaving(true)
     try {
       await createMember(form)
-      toast.success('Member na-add successfully! 🙏')
+      toast.success('Follow-up member na-add successfully! 🙏')
       setTimeout(() => navigate('/members'), 1500)
     } catch (err) {
       toast.error(
-        err.response?.data?.error || 'May error sa pag-add ng member.'
+        err.response?.data?.error || 'May error sa pag-add. Subukan ulit.'
       )
     } finally {
       setSaving(false)
@@ -59,84 +49,101 @@ function AddMember() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '500px' }}>
-      <h2>Add New Member</h2>
+    <div className="max-w-7xl mx-auto px-6 py-8">
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-        <FormField label="Name" required error={errors.name}>
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Full Name"
-            style={inputStyle(errors.name)}
-          />
-        </FormField>
-
-        <FormField label="Progress Stage" required error={errors.progress}>
-          <select name="progress" value={form.progress} onChange={handleChange} style={inputStyle(errors.progress)}>
-            {progressStages.map(s => <option key={s}>{s}</option>)}
-          </select>
-        </FormField>
-
-        <FormField label="Classification" required error={errors.classification}>
-          <select name="classification" value={form.classification} onChange={handleChange} style={inputStyle(errors.classification)}>
-            {classifications.map(c => <option key={c}>{c}</option>)}
-          </select>
-        </FormField>
-
-        <FormField label="Mentor">
-          <select name="mentor_id" value={form.mentor_id} onChange={handleChange} style={inputStyle()}>
-            <option value="">-- Pumili ng Mentor --</option>
-            {mentors.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-          </select>
-        </FormField>
-
-        <FormField
-          label="Details / Notes"
-          error={errors.details}
-          hint={`${form.details.length}/500 characters`}
+      {/* Header */}
+      <div className="mb-6">
+        <Link
+          to="/members"
+          className="text-primary-600 hover:text-primary-700
+                     text-sm font-medium no-underline"
         >
-          <textarea
-            name="details"
-            value={form.details}
-            onChange={handleChange}
-            placeholder="Life updates, notes..."
-            maxLength={500}
-            style={{ ...inputStyle(errors.details), height: '80px', resize: 'vertical' }}
-          />
-        </FormField>
+          ← Back to Members
+        </Link>
+        <h1 className="page-title mt-4">Add New Follow-up Member</h1>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}
-          >
-            {saving ? 'Saving...' : 'Add Member'}
-          </button>
-          <button onClick={() => navigate('/members')} style={btnSecondary}>
-            Cancel
-          </button>
+        {/* Info — kung sino ang magiging mentor */}
+        <div className="bg-blue-50 border border-blue-200 text-blue-700
+                        rounded-xl px-4 py-3 text-sm mt-3 inline-flex
+                        items-center gap-2">
+          👤 Ikaw ang magiging mentor ng member na ito:
+          <strong>{user?.name}</strong>
         </div>
+      </div>
 
+      {/* Form */}
+      <div className="card max-w-md">
+        <div className="flex flex-col gap-4">
+
+          <FormField label="Full Name" required error={errors.name}>
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Juan dela Cruz"
+              className={`input-field ${errors.name ? 'input-error' : ''}`}
+            />
+          </FormField>
+
+          <FormField label="Progress Stage" required error={errors.progress}>
+            <select
+              name="progress"
+              value={form.progress}
+              onChange={handleChange}
+              className={`input-field ${errors.progress ? 'input-error' : ''}`}
+            >
+              {progressStages.map(s => <option key={s}>{s}</option>)}
+            </select>
+          </FormField>
+
+          <FormField label="Classification" required error={errors.classification}>
+            <select
+              name="classification"
+              value={form.classification}
+              onChange={handleChange}
+              className={`input-field ${errors.classification ? 'input-error' : ''}`}
+            >
+              {classifications.map(c => <option key={c}>{c}</option>)}
+            </select>
+          </FormField>
+
+          <FormField
+            label="Details / Notes"
+            error={errors.details}
+            hint={`${form.details.length}/500 characters`}
+          >
+            <textarea
+              name="details"
+              value={form.details}
+              onChange={handleChange}
+              placeholder="Life updates, notes..."
+              maxLength={500}
+              className={`input-field h-24 resize-none
+                          ${errors.details ? 'input-error' : ''}`}
+            />
+          </FormField>
+
+          <div className="flex gap-3 mt-2">
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className={`btn-primary flex-1
+                          ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {saving ? '⏳ Saving...' : '✅ Add Member'}
+            </button>
+            <button
+              onClick={() => navigate('/members')}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+          </div>
+
+        </div>
       </div>
     </div>
   )
 }
-
-// Dynamic border color based sa error
-const inputStyle = (error) => ({
-  padding:      '8px 10px',
-  border:       `1px solid ${error ? '#e74c3c' : '#ccc'}`,
-  borderRadius: '6px',
-  fontSize:     '14px',
-  width:        '100%',
-  outline:      error ? '2px solid #fde8e8' : 'none',
-})
-
-const btnPrimary   = { flex: 1, padding: '10px', backgroundColor: '#1e3a5f', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }
-const btnSecondary = { flex: 1, padding: '10px', backgroundColor: '#eee', color: '#333', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '14px' }
 
 export default AddMember
