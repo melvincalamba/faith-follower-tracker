@@ -5,6 +5,7 @@ require('dotenv').config()
 const membersRouter = require('./routes/members')
 const authRouter    = require('./routes/auth')
 const mentorsRouter = require('./routes/mentors')
+const usersRouter   = require('./routes/users')
 
 const app  = express()
 const PORT = process.env.PORT || 3001
@@ -15,6 +16,7 @@ app.use(express.json())
 app.use('/api/auth',    authRouter)
 app.use('/api/members', membersRouter)
 app.use('/api/mentors', mentorsRouter)
+app.use('/api/users',   usersRouter) 
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: '🙏 FFT Backend is running!' })

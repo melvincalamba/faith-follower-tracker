@@ -4,6 +4,7 @@ import { useAuth }             from '../context/AuthContext'
 import { loginUser }           from '../services/api'
 import { validateLoginForm }   from '../utils/validation'
 import FormField               from '../components/FormField'
+import { Link }                from 'react-router-dom'
 
 function Login() {
   const [form,    setForm]    = useState({ email: '', password: '' })
@@ -11,6 +12,7 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const { login }             = useAuth()
   const navigate              = useNavigate()
+  const { user }              = useAuth()
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -93,6 +95,15 @@ function Login() {
               {loading ? '⏳ Signing in...' : 'Sign In'}
             </button>
           </div>
+          <p className="text-center text-warm-500 text-sm mt-2">
+            Wala pang account?{' '}
+            <Link
+              to="/register"
+              className="text-primary-600 hover:text-primary-700 font-medium no-underline"
+            >
+              Mag-register dito
+            </Link>
+          </p>
         </div>
 
         <p className="text-center text-warm-400 text-xs mt-6">

@@ -1,23 +1,22 @@
-import { useState, useEffect }  from 'react'
-import { useNavigate, Link }    from 'react-router-dom'
-import toast                    from 'react-hot-toast'
-import { registerUser }         from '../services/api'
-import { validateLoginForm }    from '../utils/validation'
-import FormField                from '../components/FormField'
+import { useState }         from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import toast                from 'react-hot-toast'
+import { registerUser }     from '../services/api'
+import FormField            from '../components/FormField'
 
 const emptyForm = {
   name:     '',
   email:    '',
   password: '',
   confirm:  '',
-  role:     'mentor',
 }
 
 function Register() {
-  const [form,    setForm]    = useState(emptyForm)
-  const [errors,  setErrors]  = useState({})
-  const [saving,  setSaving]  = useState(false)
-  const navigate              = useNavigate()
+  const [form,      setForm]      = useState(emptyForm)
+  const [errors,    setErrors]    = useState({})
+  const [saving,    setSaving]    = useState(false)
+  const [success,   setSuccess]   = useState(false)
+  const navigate                  = useNavigate()
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -27,27 +26,22 @@ function Register() {
 
   const validate = () => {
     const errs = {}
-
     if (!form.name.trim())
       errs.name = 'Pangalan ay kailangan.'
     else if (form.name.trim().length < 2)
       errs.name = 'Pangalan ay dapat hindi bababa sa 2 characters.'
-
     if (!form.email.trim())
       errs.email = 'Email ay kailangan.'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       errs.email = 'Hindi valid na email format.'
-
     if (!form.password)
       errs.password = 'Password ay kailangan.'
     else if (form.password.length < 6)
       errs.password = 'Password ay dapat hindi bababa sa 6 characters.'
-
     if (!form.confirm)
       errs.confirm = 'Kailangan i-confirm ang password.'
     else if (form.password !== form.confirm)
       errs.confirm = 'Hindi magkatugma ang passwords.'
-
     return errs
   }
 
@@ -58,17 +52,14 @@ function Register() {
       toast.error('Pakitama ang mga error bago mag-submit.')
       return
     }
-
     setSaving(true)
     try {
       await registerUser({
         name:     form.name,
         email:    form.email,
         password: form.password,
-        role:     form.role,
       })
-      toast.success(`${form.role === 'admin' ? 'Admin' : 'Mentor'} na-register successfully! 🙏`)
-      navigate('/mentor-dashboard')
+      setSuccess(true)
     } catch (err) {
       toast.error(
         err.response?.data?.error || 'May error sa pag-register. Subukan ulit.'
@@ -78,118 +69,128 @@ function Register() {
     }
   }
 
-  return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-
-      {/* Header */}
-      <div className="mb-6">
-        <Link
-          to="/mentor-dashboard"
-          className="text-primary-600 hover:text-primary-700 text-sm font-medium no-underline"
-        >
-          ← Back to Mentor Dashboard
-        </Link>
-        <h1 className="page-title mt-4">Register New User</h1>
-        <p className="text-warm-500 text-sm mt-1">
-          Mag-add ng bagong Mentor o Admin sa system.
-        </p>
+  // ─── Success State ────────────────────────────────────────
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-warm-100 via-warm-50
+                      to-primary-50 flex items-center justify-center px-4">
+        <div className="card max-w-md w-full text-center shadow-warm">
+          <span className="text-6xl">🙏</span>
+          <h2 className="text-xl font-bold text-warm-900 mt-4">
+            Registration Successful!
+          </h2>
+          <p className="text-warm-500 text-sm mt-2 mb-6">
+            Ang iyong account ay <strong>pending approval</strong> pa.
+            Hintayin ang Admin na mag-approve ng iyong account
+            bago ka makakapag-login.
+          </p>
+          <Link to="/login" className="btn-primary no-underline inline-block">
+            Bumalik sa Login
+          </Link>
+        </div>
       </div>
+    )
+  }
 
-      {/* Form Card */}
-      <div className="card max-w-md">
-        <div className="flex flex-col gap-4">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-warm-100 via-warm-50
+                    to-primary-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
 
-          <FormField label="Full Name" required error={errors.name}>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Juan dela Cruz"
-              className={`input-field ${errors.name ? 'input-error' : ''}`}
-            />
-          </FormField>
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20
+                          bg-white rounded-2xl shadow-warm mb-4 text-4xl">
+            🙏
+          </div>
+          <h1 className="text-2xl font-bold text-warm-900">
+            Faith Follower Tracker
+          </h1>
+          <p className="text-warm-500 text-sm mt-1">
+            Gumawa ng bagong account
+          </p>
+        </div>
 
-          <FormField label="Email" required error={errors.email}>
-            <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="mentor@fft.com"
-              className={`input-field ${errors.email ? 'input-error' : ''}`}
-            />
-          </FormField>
+        {/* Form Card */}
+        <div className="card shadow-warm">
+          <h2 className="text-lg font-semibold text-warm-800 mb-2">
+            Create Account
+          </h2>
 
-          <FormField label="Password" required error={errors.password}
-            hint="Minimum 6 characters">
-            <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              className={`input-field ${errors.password ? 'input-error' : ''}`}
-            />
-          </FormField>
-
-          <FormField label="Confirm Password" required error={errors.confirm}>
-            <input
-              name="confirm"
-              type="password"
-              value={form.confirm}
-              onChange={handleChange}
-              placeholder="••••••••"
-              className={`input-field ${errors.confirm ? 'input-error' : ''}`}
-            />
-          </FormField>
-
-          <FormField label="Role" required>
-            <select
-              name="role"
-              value={form.role}
-              onChange={handleChange}
-              className="input-field"
-            >
-              <option value="mentor">Mentor</option>
-              <option value="admin">Admin</option>
-            </select>
-          </FormField>
-
-          {/* Role Info */}
-          <div className={`rounded-xl px-4 py-3 text-sm ${
-            form.role === 'admin'
-              ? 'bg-orange-50 border border-orange-200 text-orange-700'
-              : 'bg-blue-50 border border-blue-200 text-blue-700'
-          }`}>
-            {form.role === 'admin' ? (
-              <p className="m-0">
-                ⚠️ <strong>Admin</strong> — makakakita ng lahat, makakapag-delete,
-                at makakapag-register ng bagong users.
-              </p>
-            ) : (
-              <p className="m-0">
-                👤 <strong>Mentor</strong> — makakakita at makakapag-update
-                ng assigned members niya lang.
-              </p>
-            )}
+          {/* Info Banner */}
+          <div className="bg-blue-50 border border-blue-200 text-blue-700
+                          rounded-xl px-4 py-3 text-sm mb-4">
+            ℹ️ Ang bagong account ay kailangan munang
+            <strong> i-approve ng Admin </strong>
+            bago makakapag-login.
           </div>
 
-          <div className="flex gap-3 mt-2">
+          <div className="flex flex-col gap-4">
+            <FormField label="Full Name" required error={errors.name}>
+              <input
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Juan dela Cruz"
+                className={`input-field ${errors.name ? 'input-error' : ''}`}
+              />
+            </FormField>
+
+            <FormField label="Email" required error={errors.email}>
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="you@email.com"
+                className={`input-field ${errors.email ? 'input-error' : ''}`}
+              />
+            </FormField>
+
+            <FormField
+              label="Password" required error={errors.password}
+              hint="Minimum 6 characters"
+            >
+              <input
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                className={`input-field ${errors.password ? 'input-error' : ''}`}
+              />
+            </FormField>
+
+            <FormField label="Confirm Password" required error={errors.confirm}>
+              <input
+                name="confirm"
+                type="password"
+                value={form.confirm}
+                onChange={handleChange}
+                placeholder="••••••••"
+                className={`input-field ${errors.confirm ? 'input-error' : ''}`}
+              />
+            </FormField>
+
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className={`btn-primary flex-1 ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`btn-primary w-full mt-2
+                          ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              {saving ? '⏳ Registering...' : '✅ Register User'}
+              {saving ? '⏳ Registering...' : 'Create Account'}
             </button>
-            <button
-              onClick={() => navigate('/mentor-dashboard')}
-              className="btn-secondary flex-1"
-            >
-              Cancel
-            </button>
-          </div>
 
+            <p className="text-center text-warm-500 text-sm">
+              May account ka na?{' '}
+              <Link
+                to="/login"
+                className="text-primary-600 hover:text-primary-700 font-medium no-underline"
+              >
+                Sign in dito
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

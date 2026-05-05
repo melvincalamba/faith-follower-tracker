@@ -11,6 +11,7 @@ import EditMember         from './pages/EditMember'
 import MemberDetail       from './pages/MemberDetail'
 import MentorDashboard    from './pages/MentorDashboard'
 import Register           from './pages/Register'
+import UserManagement     from './pages/UserManagement'
 
 function AppLayout() {
   const { user } = useAuth()
@@ -39,10 +40,10 @@ function AppLayout() {
         <Route path="/mentor-dashboard" element={
           <ProtectedRoute><MentorDashboard /></ProtectedRoute>
         }/>
-        <Route path="/register" element={
-          <ProtectedRoute adminOnly><Register /></ProtectedRoute>
+        <Route path="/register" element={<Register />} /> {/* Public */}
+        <Route path="/users" element={
+          <ProtectedRoute adminOnly><UserManagement /></ProtectedRoute>
         }/>
-        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   )
