@@ -67,8 +67,7 @@ function MentorDashboard() {
       <div style={{ display: 'flex', gap: '24px', marginTop: '16px' }}>
 
         {/* Mentor List — Admin lang makakakita nito */}
-        {user?.role === 'admin' && (
-          <div style={{ width: '220px', flexShrink: 0 }}>
+        <div className="w-56 flex-shrink-0">
             <h4 style={{ margin: '0 0 12px', color: '#555' }}>Mga Mentor</h4>
             {mentors.length === 0 ? (
               <p style={{ color: '#888', fontSize: '13px' }}>Wala pang mentors.</p>
@@ -101,7 +100,6 @@ function MentorDashboard() {
               </div>
             )}
           </div>
-        )}
 
         {/* Members of Selected Mentor */}
         <div style={{ flex: 1 }}>
@@ -109,7 +107,7 @@ function MentorDashboard() {
             <EmptyState
               icon="👆"
               title="Pumili ng Mentor"
-              message="I-click ang isang mentor sa kaliwa para makita ang kanyang mga members."
+              message="I-click ang isang mentor sa kaliwa para makita ang kanyang mga follow-ups."
             />
           ) : loadingMembers ? (
             <LoadingSpinner message="Kinukuha ang mga members..." />
