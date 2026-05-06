@@ -18,6 +18,8 @@ function MemberDetail() {
   const [deleting,setDeleting]    = useState(false)
   const [history, setHistory]     = useState([])
   const [modal, setModal]         = useState(false)
+  const canEdit   = user?.role === 'admin' || member?.mentor_id === user?.id
+  const canDelete = user?.role === 'admin' || member?.mentor_id === user?.id
 
   const fetchMember = async () => {
     setLoading(true)
@@ -77,14 +79,16 @@ function MemberDetail() {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: '8px' }}>
-          <Link to={`/members/${id}/edit`} style={editBtn}>
-            ✏️ Edit
-          </Link>
-          {user?.role === 'admin' && (
+          {canEdit && (
+            <Link to={`/members/${id}/edit`} style={editBtn}>
+              ✏️ Edit
+            </Link>
+          )}
+          {canDelete && (
             <button
-              onClick={() => setModal(true)}
+              onClick={handleDelete}
               disabled={deleting}
-              className="btn-danger px-4 py-2 rounded-xl text-sm font-semibold"
+              style={deleteBtn}
             >
               {deleting ? 'Deleting...' : '🗑️ Delete'}
             </button>

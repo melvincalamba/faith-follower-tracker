@@ -137,9 +137,11 @@ function Members() {
             </thead>
             <tbody>
               {filtered.map(member => {
-                // ← Pwedeng mag-edit kung admin O kung ikaw ang mentor niya
-                const canEdit   = user?.role === 'admin' || member.mentor_id === user?.id
-                const canDelete = user?.role === 'admin'
+                const canEdit   = (member) =>
+                  user?.role === 'admin' || member.mentor_id === user?.id
+
+                const canDelete = (member) =>
+                  user?.role === 'admin' || member.mentor_id === user?.id
 
                 return (
                   <tr
@@ -159,30 +161,30 @@ function Members() {
                       {member.details || '—'}
                     </td>
                     <td className="table-cell">
-                      <div
-                        className="flex gap-2 justify-center"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        {canEdit && (
+                      <div className="flex gap-2 justify-center">
+                        {canEdit(member) && (
                           <button
-                            onClick={() => navigate(`/members/${member.id}/edit`)}
+                            onClick={e => {
+                              e.stopPropagation()
+                              navigate(`/members/${member.id}/edit`)
+                            }}
                             className="bg-blue-500 hover:bg-blue-600 text-white
                                       text-xs px-3 py-1.5 rounded-lg transition-all"
                           >
                             ✏️ Edit
                           </button>
                         )}
-                        {canDelete && (
+                        {canDelete(member) && (
                           <button
                             onClick={e => handleDelete(e, member.id, member.name)}
                             disabled={deleting === member.id}
                             className="btn-danger text-xs px-3 py-1.5"
                           >
-                            {deleting === member.id ? '...' : '🗑️ Delete'}
+                            {deleting === member.id ? '...' : '🗑️'}
                           </button>
                         )}
-                        {!canEdit && !canDelete && (
-                          <span className="text-warm-300 text-xs">View only</span>
+                        {!canEdit(member) && !canDelete(member) && (
+                          <span className="text-warm-300 text-xs">—</span>
                         )}
                       </div>
                     </td>

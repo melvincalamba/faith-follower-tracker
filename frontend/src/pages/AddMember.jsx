@@ -1,11 +1,10 @@
-import { useState }              from 'react'
-import { useNavigate, Link }     from 'react-router-dom'
-import toast                     from 'react-hot-toast'
-import { createMember }          from '../services/api'
+import { useState }                     from 'react'
+import { useNavigate }                  from 'react-router-dom'
+import toast                            from 'react-hot-toast'
+import { createMember }                 from '../services/api'
 import { progressStages, classifications } from '../data/mockData'
-import { validateMemberForm }    from '../utils/validation'
-import FormField                 from '../components/FormField'
-import { useAuth }               from '../context/AuthContext'
+import { validateMemberForm }           from '../utils/validation'
+import FormField                        from '../components/FormField'
 
 const emptyForm = {
   name:           '',
@@ -19,7 +18,6 @@ function AddMember() {
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
   const navigate            = useNavigate()
-  const { user }            = useAuth()
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -28,9 +26,9 @@ function AddMember() {
   }
 
   const handleSubmit = async () => {
-    const { errors: validationErrors, isValid } = validateMemberForm(form)
+    const { errors: ve, isValid } = validateMemberForm(form)
     if (!isValid) {
-      setErrors(validationErrors)
+      setErrors(ve)
       toast.error('Pakitama ang mga error bago mag-submit.')
       return
     }
@@ -50,37 +48,22 @@ function AddMember() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-
-      {/* Header */}
       <div className="mb-6">
-        <Link
-          to="/members"
-          className="text-primary-600 hover:text-primary-700
-                     text-sm font-medium no-underline"
-        >
-          ← Back to Members
-        </Link>
-        <h1 className="page-title mt-4">Add New Follow-up Member</h1>
-
-        {/* Info — kung sino ang magiging mentor */}
-        <div className="bg-blue-50 border border-blue-200 text-blue-700
-                        rounded-xl px-4 py-3 text-sm mt-3 inline-flex
-                        items-center gap-2">
-          👤 Ikaw ang magiging mentor ng member na ito:
-          <strong>{user?.name}</strong>
-        </div>
+        <h1 className="page-title">Add Follow-up Member</h1>
+        <p className="text-warm-500 text-sm mt-1">
+          Ang bagong member ay awtomatikong magiging follow-up mo.
+        </p>
       </div>
 
-      {/* Form */}
       <div className="card max-w-md">
         <div className="flex flex-col gap-4">
 
-          <FormField label="Full Name" required error={errors.name}>
+          <FormField label="Name" required error={errors.name}>
             <input
               name="name"
               value={form.name}
               onChange={handleChange}
-              placeholder="Juan dela Cruz"
+              placeholder="Full Name"
               className={`input-field ${errors.name ? 'input-error' : ''}`}
             />
           </FormField>
@@ -118,8 +101,8 @@ function AddMember() {
               onChange={handleChange}
               placeholder="Life updates, notes..."
               maxLength={500}
-              className={`input-field h-24 resize-none
-                          ${errors.details ? 'input-error' : ''}`}
+              className={`input-field ${errors.details ? 'input-error' : ''}`}
+              style={{ height: '80px', resize: 'vertical' }}
             />
           </FormField>
 
@@ -127,10 +110,9 @@ function AddMember() {
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className={`btn-primary flex-1
-                          ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`btn-primary flex-1 ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              {saving ? '⏳ Saving...' : '✅ Add Member'}
+              {saving ? '⏳ Saving...' : '+ Add Member'}
             </button>
             <button
               onClick={() => navigate('/members')}

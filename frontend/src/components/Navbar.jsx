@@ -6,11 +6,11 @@ function Navbar() {
   const location         = useLocation()
 
   const navLinks = [
-    { to: '/',                 label: 'Dashboard',    roles: ['admin', 'mentor'] },
-    { to: '/members',          label: 'Members',      roles: ['admin', 'mentor'] },
-    { to: '/add-member',       label: '+ Add Member', roles: ['admin', 'mentor'] },
-    { to: '/mentor-dashboard', label: 'Mentors',      roles: ['admin', 'mentor'] },
-    { to: '/users',            label: '👥 Users',     roles: ['admin']           },
+    { to: '/',             label: 'Dashboard',    roles: ['admin', 'mentor'] },
+    { to: '/members',      label: 'Members',      roles: ['admin', 'mentor'] },
+    { to: '/add-member',   label: '+ Add Member', roles: ['admin', 'mentor'] },
+    { to: '/mentor-dashboard', label: 'Mentors',  roles: ['admin', 'mentor'] },
+    { to: '/users',        label: '👥 Users',     roles: ['admin']           },
   ].filter(link => link.roles.includes(user?.role))
 
   return (

@@ -8,14 +8,13 @@ const {
   deleteMember,
   getMemberHistory,
 } = require('../controllers/membersController')
-const { protect, adminOnly } = require('../middleware/authMiddleware')
+const { protect } = require('../middleware/authMiddleware')
 
-// Lahat ng members routes ay protected na
-router.get('/',       protect,              getAllMembers)
-router.get('/:id',    protect,              getMemberById)
-router.post('/',      protect,              createMember)
-router.put('/:id',    protect,              updateMember)
-router.delete('/:id', protect, adminOnly,   deleteMember)
-router.get('/:id/history', protect,     getMemberHistory)
+router.get('/',            protect, getAllMembers)
+router.get('/:id',         protect, getMemberById)
+router.get('/:id/history', protect, getMemberHistory)
+router.post('/',           protect, createMember)
+router.put('/:id',         protect, updateMember)
+router.delete('/:id',      protect, deleteMember)
 
 module.exports = router
