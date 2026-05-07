@@ -9,16 +9,27 @@ const pool = new Pool({
   database: process.env.DB_NAME,
 })
 
-// Test connection — hindi sa test environment
-if (process.env.NODE_ENV !== 'test') {
-  pool.connect((err, client, release) => {
-    if (err) {
-      console.error('❌ Database connection error:', err.message)
+// ← Retry logic — hintayin ang DB na maging ready
+const connectWithRetry = async (retries = 5, delay = 3000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const client = await pool.connect()
+      client.release()
+      console.log('✅ Connected to PostgreSQL database!')
       return
+    } catch (err) {
+      console.log(`⏳ DB not ready yet... retrying (${i + 1}/${retries})`)
+      if (i < retries - 1) {
+        await new Promise(res => setTimeout(res, delay))
+      } else {
+        console.error('❌ Database connection error:', err.message)
+      }
     }
-    release()
-    console.log('✅ Connected to PostgreSQL database!')
-  })
+  }
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  connectWithRetry()
 }
 
 module.exports = pool

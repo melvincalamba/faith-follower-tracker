@@ -10,7 +10,14 @@ const usersRouter   = require('./routes/users')
 const app  = express()
 const PORT = process.env.PORT || 3001
 
-app.use(cors({ origin: 'http://localhost:5173' }))
+app.use(cors({
+  origin: [
+    'http://localhost:5173',  // Development
+    'http://localhost',       // Production (Docker)
+    'http://localhost:80',    // Production (Docker explicit port)
+  ],
+  credentials: true,
+}))
 app.use(express.json())
 
 app.use('/api/auth',    authRouter)

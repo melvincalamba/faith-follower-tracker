@@ -11,16 +11,15 @@ const testUser = {
 
 let authToken = ''
 
-// ← Isara ang DB connection pagkatapos ng lahat ng tests
 afterAll(async () => {
-  await pool.query(
-    'DELETE FROM users WHERE email = $1', [testUser.email]
-  )
+  // I-cleanup — delete test user
+  await pool.query('DELETE FROM users WHERE email = $1', [testUser.email])
   await pool.end()
 })
 
 describe('Auth Routes', () => {
 
+  // ─── Register ───────────────────────────────────────────
   describe('POST /api/auth/register', () => {
 
     it('dapat mag-register ng bagong user', async () => {
@@ -29,10 +28,9 @@ describe('Auth Routes', () => {
         .send(testUser)
 
       expect(res.statusCode).toBe(201)
-      expect(res.body).toHaveProperty('token')
-      expect(res.body.user.email).toBe(testUser.email)
-      expect(res.body.user.role).toBe('mentor')
-      authToken = res.body.token
+      // ← Pending na ngayon — walang token, may message lang
+      expect(res.body).toHaveProperty('message')
+      expect(res.body.message).toMatch(/approval/i)
     })
 
     it('dapat mag-fail kung duplicate ang email', async () => {
@@ -54,15 +52,36 @@ describe('Auth Routes', () => {
     })
   })
 
+  // ─── Login ───────────────────────────────────────────────
   describe('POST /api/auth/login', () => {
 
-    it('dapat mag-login ng existing user', async () => {
+    it('dapat mag-fail ang pending user sa login', async () => {
+      // ← Pending pa si testUser — hindi pa approved
+      const res = await request(app)
+        .post('/api/auth/login')
+        .send({ email: testUser.email, password: testUser.password })
+
+      expect(res.statusCode).toBe(403)
+      expect(res.body.error).toMatch(/pending/i)
+    })
+
+    it('dapat mag-login ang approved user', async () => {
+      // ← I-approve muna si testUser para makapag-login
+      await pool.query(
+        'UPDATE users SET status = $1 WHERE email = $2',
+        ['active', testUser.email]
+      )
+
       const res = await request(app)
         .post('/api/auth/login')
         .send({ email: testUser.email, password: testUser.password })
 
       expect(res.statusCode).toBe(200)
       expect(res.body).toHaveProperty('token')
+      expect(res.body.user.email).toBe(testUser.email)
+
+      // I-save ang token para sa susunod na tests
+      authToken = res.body.token
     })
 
     it('dapat mag-fail kung mali ang password', async () => {
@@ -82,6 +101,7 @@ describe('Auth Routes', () => {
     })
   })
 
+  // ─── Get Me ──────────────────────────────────────────────
   describe('GET /api/auth/me', () => {
 
     it('dapat ibalik ang current user kung may valid token', async () => {
@@ -94,7 +114,9 @@ describe('Auth Routes', () => {
     })
 
     it('dapat mag-fail kung walang token', async () => {
-      const res = await request(app).get('/api/auth/me')
+      const res = await request(app)
+        .get('/api/auth/me')
+
       expect(res.statusCode).toBe(401)
     })
 

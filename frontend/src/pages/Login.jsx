@@ -73,7 +73,7 @@ function Login() {
               <input
                 name="email" type="email"
                 value={form.email} onChange={handleChange}
-                placeholder="you@email.com"
+                placeholder="you@fft.com"
                 className={`input-field ${errors.email ? 'input-error' : ''}`}
               />
             </FormField>

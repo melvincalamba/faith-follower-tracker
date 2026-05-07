@@ -2,57 +2,59 @@ version: '3.8'
 
 services:
 
-  # ─── PostgreSQL Database ───────────────────────────────
   db:
-    image: postgres:15
-    container_name: fft_db
-    restart: always
-    environment:
-      POSTGRES_USER: localhost
-      POSTGRES_PASSWORD: 1120melvin
-      POSTGRES_DB: faith_follower_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database:/docker-entrypoint-initdb.d
-    networks:
-      - fft_network
+      image: postgres:15
+      container_name: fft_db
+      restart: always
+      environment:
+        POSTGRES_USER:     postgres
+        POSTGRES_PASSWORD: 1120melvin
+        POSTGRES_DB:       faith_follower_db
+      ports:
+        - "5433:5432"
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+        - ./database:/docker-entrypoint-initdb.d
+      networks:
+        - fft_network
+      healthcheck:
+        test:     ["CMD-SHELL", "pg_isready -U postgres -d faith_follower_db"]
+        interval: 5s
+        timeout:  5s
+        retries:  10
 
-  # ─── Backend (Node + Express) ──────────────────────────
   backend:
-    build: ./backend
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile.prod
     container_name: fft_backend
     restart: always
+    env_file:
+      - ./backend/.env
     environment:
-      DATABASE_URL: postgres://localhost:1120melvin@db:5432/faith_follower_db
-      NODE_ENV: development
+      NODE_ENV: production
     ports:
       - "3001:3001"
+    # ← Hintayin ang DB na maging healthy bago mag-start
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - fft_network
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
 
-  # ─── Frontend (React) ──────────────────────────────────
   frontend:
-    build: ./frontend
+    build:
+      context:    ./frontend
+      dockerfile: Dockerfile.prod
     container_name: fft_frontend
     restart: always
     ports:
-      - "5173:5173"      # ← Vite default port
+      - "80:80"
     depends_on:
       - backend
     networks:
       - fft_network
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
 
-# ─── Volumes & Networks ──────────────────────────────────
 volumes:
   postgres_data:
 
