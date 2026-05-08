@@ -11,17 +11,15 @@ import ProgressBadge                 from '../components/ProgressBadge'
 import ConfirmModal                  from '../components/ConfirmModal'
 
 function Members() {
-  const [members,    setMembers]  = useState([])
-  const [loading,    setLoading]  = useState(true)
-  const [error,      setError]    = useState(null)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [memberToDelete, setMemberToDelete] = useState(null)
-  const [modal,      setModal]    = useState({ isOpen: false, id: null, name: '' })
-  const [search,     setSearch]   = useState('')
-  const [filter,     setFilter]   = useState('All')
-  const [deleting,   setDeleting] = useState(null)
-  const { user }                  = useAuth()
-  const navigate                  = useNavigate()
+  const [members,  setMembers]  = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [error,    setError]    = useState(null)
+  const [search,   setSearch]   = useState('')
+  const [filter,   setFilter]   = useState('All')
+  const [deleting, setDeleting] = useState(null)
+  const [modal, setModal] = useState({ isOpen: false, id: null, name: '' })
+  const { user }  = useAuth()
+  const navigate  = useNavigate()
 
   const fetchMembers = async () => {
     setLoading(true)
@@ -37,9 +35,14 @@ function Members() {
   }
 
   useEffect(() => { fetchMembers() }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const openDeleteModal = (e, id, name) => {
+    e.stopPropagation()
+    setModal({ isOpen: true, id, name })
+  }
 
   const handleDelete = async () => {
-    setModal(prev => ({ ...prev, isOpen: false }))
+    setModal({ isOpen: false, id: null, name: '' })
     setDeleting(modal.id)
     try {
       await deleteMember(modal.id)
@@ -51,6 +54,16 @@ function Members() {
       setDeleting(null)
     }
   }
+
+  const handleCancelDelete = () => {
+    setModal({ isOpen: false, id: null, name: '' })
+  }
+
+  const canEdit   = (member) =>
+    user?.role === 'admin' || member.mentor_id === user?.id
+
+  const canDelete = (member) =>
+    user?.role === 'admin' || member.mentor_id === user?.id
 
   const filtered = members.filter(m => {
     const matchSearch = m.name.toLowerCase().includes(search.toLowerCase())
@@ -81,7 +94,9 @@ function Members() {
       <div className="card mb-6">
         <div className="flex gap-3">
           <div className="relative flex-1">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-400">🔍</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-400">
+              🔍
+            </span>
             <input
               type="text"
               placeholder="Search by name..."
@@ -136,73 +151,67 @@ function Members() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(member => {
-                const canEdit   = (member) =>
-                  user?.role === 'admin' || member.mentor_id === user?.id
-
-                const canDelete = (member) =>
-                  user?.role === 'admin' || member.mentor_id === user?.id
-
-                return (
-                  <tr
-                    key={member.id}
-                    className="table-row"
-                    onClick={() => navigate(`/members/${member.id}`)}
-                  >
-                    <td className="table-cell font-semibold text-warm-900">
-                      {member.name}
-                    </td>
-                    <td className="table-cell">
-                      <ProgressBadge progress={member.progress} />
-                    </td>
-                    <td className="table-cell">{member.mentor         || '—'}</td>
-                    <td className="table-cell">{member.classification || '—'}</td>
-                    <td className="table-cell text-warm-500 max-w-xs truncate">
-                      {member.details || '—'}
-                    </td>
-                    <td className="table-cell">
-                      <div className="flex gap-2 justify-center">
-                        {canEdit(member) && (
-                          <button
-                            onClick={e => {
-                              e.stopPropagation()
-                              navigate(`/members/${member.id}/edit`)
-                            }}
-                            className="bg-blue-500 hover:bg-blue-600 text-white
-                                      text-xs px-3 py-1.5 rounded-lg transition-all"
-                          >
-                            ✏️ Edit
-                          </button>
-                        )}
-                        {canDelete(member) && (
-                          <button
-                            onClick={e => handleDelete(e, member.id, member.name)}
-                            disabled={deleting === member.id}
-                            className="btn-danger text-xs px-3 py-1.5"
-                          >
-                            {deleting === member.id ? '...' : '🗑️'}
-                          </button>
-                        )}
-                        {!canEdit(member) && !canDelete(member) && (
-                          <span className="text-warm-300 text-xs">—</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
+              {filtered.map(member => (
+                <tr
+                  key={member.id}
+                  className="table-row"
+                  onClick={() => navigate(`/members/${member.id}`)}
+                >
+                  <td className="table-cell font-semibold text-warm-900">
+                    {member.name}
+                  </td>
+                  <td className="table-cell">
+                    <ProgressBadge progress={member.progress} />
+                  </td>
+                  <td className="table-cell">{member.mentor         || '—'}</td>
+                  <td className="table-cell">{member.classification || '—'}</td>
+                  <td className="table-cell text-warm-500 max-w-xs truncate">
+                    {member.details || '—'}
+                  </td>
+                  <td className="table-cell">
+                    <div className="flex gap-2 justify-center">
+                      {canEdit(member) && (
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            navigate(`/members/${member.id}/edit`)
+                          }}
+                          className="bg-blue-500 hover:bg-blue-600 text-white
+                                     text-xs px-3 py-1.5 rounded-lg transition-all"
+                        >
+                          ✏️ Edit
+                        </button>
+                      )}
+                      {canDelete(member) && (
+                        <button
+                          onClick={e => openDeleteModal(e, member.id, member.name)}
+                          disabled={deleting === member.id}
+                          className="btn-danger text-xs px-3 py-1.5"
+                        >
+                          {deleting === member.id ? '...' : '🗑️'}
+                        </button>
+                      )}
+                      {!canEdit(member) && !canDelete(member) && (
+                        <span className="text-warm-300 text-xs">—</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}
-        <ConfirmModal
-          isOpen={modal.isOpen}
-          title="I-delete ang Member?"
-          message={`Sigurado ka bang gusto mong i-delete si ${modal.name}? Hindi na ito mababawi.`}
-          confirmLabel="🗑️ I-delete"
-          onConfirm={handleDelete}
-          onCancel={() => setModal({ isOpen: false, id: null, name: '' })}
-        />
       </div>
+
+      <ConfirmModal
+        isOpen={modal.isOpen}
+        title="I-delete ang Member?"
+        message={`Sigurado ka bang gusto mong i-delete si ${modal.name}? Hindi na ito mababawi.`}
+        confirmLabel="🗑️ I-delete"
+        onConfirm={handleDelete}
+        onCancel={handleCancelDelete}
+      />
+
     </div>
   )
 }
