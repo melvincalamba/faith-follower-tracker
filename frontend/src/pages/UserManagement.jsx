@@ -1,14 +1,16 @@
-import { useState, useEffect }            from 'react'
-import toast                              from 'react-hot-toast'
+import { useState, useEffect }               from 'react'
+import toast                                 from 'react-hot-toast'
 import { getUsers, approveUser, deleteUser } from '../services/api'
-import LoadingSpinner                     from '../components/LoadingSpinner'
-import ErrorMessage                       from '../components/ErrorMessage'
-import EmptyState                         from '../components/EmptyState'
+import LoadingSpinner                        from '../components/LoadingSpinner'
+import ErrorMessage                          from '../components/ErrorMessage'
+import EmptyState                            from '../components/EmptyState'
+import ConfirmModal                          from '../components/ConfirmModal'
 
 function UserManagement() {
   const [users,   setUsers]   = useState([])
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
+  const [modal, setModal] = useState({ isOpen: false, id: null, name: '' })
 
   const fetchUsers = async () => {
     setLoading(true)
@@ -37,15 +39,23 @@ function UserManagement() {
     }
   }
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`I-reject/delete si ${name}?`)) return
+  const openDeleteModal = (id, name) => {
+    setModal({ isOpen: true, id, name })
+  }
+
+  const handleDelete = async () => {
+    setModal({ isOpen: false, id: null, name: '' })
     try {
-      await deleteUser(id)
-      setUsers(prev => prev.filter(u => u.id !== id))
-      toast.success(`${name} ay na-delete na.`)
+      await deleteUser(modal.id)
+      setUsers(prev => prev.filter(u => u.id !== modal.id))
+      toast.success(`${modal.name} ay na-delete na. 🙏`)
     } catch (err) {
       toast.error(err.response?.data?.error || 'Hindi ma-delete. Subukan ulit.')
     }
+  }
+
+  const handleCancelDelete = () => {
+    setModal({ isOpen: false, id: null, name: '' })
   }
 
   const pending = users.filter(u => u.status === 'pending')
@@ -113,7 +123,7 @@ function UserManagement() {
                         ✅ Approve
                       </button>
                       <button
-                        onClick={() => handleDelete(user.id, user.name)}
+                        onClick={() => openDeleteModal(user.id, user.name)}
                         className="btn-danger text-xs px-3 py-1.5"
                       >
                         ❌ Reject
@@ -164,7 +174,7 @@ function UserManagement() {
                   </td>
                   <td className="table-cell text-center">
                     <button
-                      onClick={() => handleDelete(user.id, user.name)}
+                      onClick={() => openDeleteModal(user.id, user.name)}
                       className="btn-danger text-xs px-3 py-1.5"
                     >
                       🗑️ Delete
@@ -176,6 +186,16 @@ function UserManagement() {
           </table>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={modal.isOpen}
+        title="I-delete ang User?"
+        message={`Sigurado ka bang gusto mong i-delete si ${modal.name}? Hindi na ito mababawi.`}
+        confirmLabel="🗑️ I-delete"
+        onConfirm={handleDelete}
+        onCancel={handleCancelDelete}
+      />
+
     </div>
   )
 }
