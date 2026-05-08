@@ -5,7 +5,8 @@ const getAllMentors = async (req, res) => {
     const result = await pool.query(`
       SELECT id, name, email, role
       FROM users
-      WHERE role = 'mentor' OR role = 'admin'
+      WHERE (role = 'mentor' OR role = 'admin')
+      AND status = 'active'
       ORDER BY name ASC
     `)
     res.json(result.rows)
