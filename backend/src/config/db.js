@@ -9,7 +9,7 @@ const pool = new Pool({
   database: process.env.DB_NAME,
 })
 
-// ← Retry logic — hintayin ang DB na maging ready
+// Retry logic to handle cases where the database might not be ready yet (e.g., in Docker)
 const connectWithRetry = async (retries = 5, delay = 3000) => {
   for (let i = 0; i < retries; i++) {
     try {

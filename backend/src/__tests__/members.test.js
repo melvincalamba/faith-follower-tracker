@@ -6,8 +6,6 @@ let authToken = ''
 let createdId = null
 
 beforeAll(async () => {
-  // Siguraduhing nag-eexist ang admin user
-  // Kung hindi pa nag-eexist, gumawa ng isa
   try {
     const loginRes = await request(app)
       .post('/api/auth/login')
@@ -15,25 +13,50 @@ beforeAll(async () => {
 
     if (loginRes.statusCode === 200) {
       authToken = loginRes.body.token
-    } else {
-      // Gumawa ng admin kung wala pa
-      const registerRes = await request(app)
-        .post('/api/auth/register')
-        .send({
-          name:     'Admin User',
-          email:    'admin@fft.com',
-          password: 'Admin1234',
-          role:     'admin',
-        })
-      authToken = registerRes.body.token
+      return
     }
+
+    const registerRes = await request(app)
+      .post('/api/auth/register')
+      .send({
+        name:     'Admin User',
+        email:    'admin@fft.com',
+        password: 'Admin1234',
+        role:     'admin',
+      })
+
+    if (registerRes.statusCode === 201) {
+      await pool.query(`
+        UPDATE users
+        SET status = 'active', role = 'admin'
+        WHERE email = $1
+      `, ['admin@fft.com'])
+    } else {
+      await pool.query(`
+        UPDATE users
+        SET status = 'active', role = 'admin'
+        WHERE email = $1
+      `, ['admin@fft.com'])
+    }
+
+    const finalLogin = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'admin@fft.com', password: 'Admin1234' })
+
+    authToken = finalLogin.body.token
+
+    if (!authToken) {
+      console.error('❌ Hindi makuha ang auth token!')
+    } else {
+      console.log('✅ Auth token acquired!')
+    }
+
   } catch (err) {
-    console.error('Setup error:', err.message)
+    console.error('beforeAll setup error:', err.message)
   }
 })
 
 afterAll(async () => {
-  // I-cleanup ang test data
   if (createdId) {
     await pool.query('DELETE FROM members WHERE id = $1', [createdId])
   }
@@ -160,7 +183,7 @@ describe('Members Routes', () => {
     it('dapat ma-confirm na na-delete na ang member', async () => {
       // ← Gamitin ang createdId — siguradong wala na sa DB
       const deletedId = createdId
-      createdId = null  // I-clear para hindi ulit i-delete sa afterAll
+      createdId = null // I-reset para hindi ma-cleanup ulit sa afterAll
 
       const res = await request(app)
         .get(`/api/members/${deletedId}`)

@@ -39,7 +39,7 @@ const register = async (req, res) => {
       VALUES ($1, $2, $3, 'mentor', 'pending')
     `, [name.trim(), email.trim(), hashedPassword])
 
-    // ← Hindi na nagse-send ng token — kailangan muna ng approval
+    // ← Hindi agad makakapag-login, kailangan ng admin approval
     res.status(201).json({
       message: 'Successfully registered! Hintayin ang approval ng Admin bago makakapag-login.',
     })
@@ -67,7 +67,7 @@ const login = async (req, res) => {
 
     const user = result.rows[0]
 
-    // ← I-check ang status — pending hindi makakalog-in
+    // ← Check if account is pending approval
     if (user.status === 'pending') {
       return res.status(403).json({
         error: 'Ang iyong account ay pending pa. Hintayin ang approval ng Admin.'

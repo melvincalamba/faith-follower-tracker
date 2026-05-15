@@ -19,7 +19,7 @@ const validateMemberData = (data) => {
   return errors
 }
 
-// GET /api/members — lahat ng members, visible sa lahat
+// GET /api/members — lahat ng logged-in users makikita
 const getAllMembers = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -80,7 +80,7 @@ const getMemberById = async (req, res) => {
   }
 }
 
-// POST /api/members — lahat ng logged-in users makakapag-add
+// POST /api/members — lahat ng logged-in users makakacreate, pero automatikong sila ang magiging mentor
 const createMember = async (req, res) => {
   try {
     const { name, progress, classification, details } = req.body
@@ -100,7 +100,7 @@ const createMember = async (req, res) => {
     )
     const classification_id = classResult.rows[0]?.id || null
 
-    // ← Awtomatikong ang naka-login na user ang magiging mentor
+    // ← Automatikong ang naka-login na user ang magiging mentor
     const mentor_id = req.user.id
 
     const result = await pool.query(`
@@ -120,7 +120,7 @@ const createMember = async (req, res) => {
   }
 }
 
-// PUT /api/members/:id — sarili lang ang mae-edit, Admin lahat
+// PUT /api/members/:id — Admin makakapag-edit ng lahat, Mentor makakapag-edit ng sarili lang
 const updateMember = async (req, res) => {
   try {
     const { id }    = req.params
@@ -131,7 +131,7 @@ const updateMember = async (req, res) => {
       return res.status(400).json({ error: validationErrors.join(' ') })
     }
 
-    // I-check kung sino ang may-ari ng member
+    // ← I-check muna kung sino ang mentor ng member na ito at ano ang current progress stage para ma-validate ang permissions at ma-track ang progress change
     const current = await pool.query(`
       SELECT m.mentor_id, ps.label AS progress
       FROM members m
@@ -175,7 +175,6 @@ const updateMember = async (req, res) => {
       WHERE id = $5
     `, [name, progress_stage_id, classification_id, details || null, id])
 
-    // I-track ang progress change
     if (oldProgress !== progress) {
       await pool.query(`
         INSERT INTO progress_history
